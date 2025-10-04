@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".PerfilUsuario">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="53dp"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/textViewPerfil"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Perfil"
+        app:layout_constraintBottom_toTopOf="@+id/imageView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Valentim"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.291"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="143dp" />
+
+    <TextView
+        android:id="@+id/textViewMatricula"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="29383224"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.706"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="143dp" />
+
+    <Button
+        android:id="@+id/buttonConfiguracoes"
+        android:layout_width="17dp"
+        android:layout_height="25dp"
+        android:text="Button"
+        tools:layout_editor_absoluteX="378dp"
+        tools:layout_editor_absoluteY="10dp" />
+
+    <Button
+        android:id="@+id/buttonNotificacoes"
+        android:layout_width="17dp"
+        android:layout_height="25dp"
+        android:text="Button"
+        tools:layout_editor_absoluteX="353dp"
+        tools:layout_editor_absoluteY="10dp" />
+
+    <Button
+        android:id="@+id/buttonAdicionarMeta"
+        android:layout_width="17dp"
+        android:layout_height="25dp"
+        android:text="Button"
+        tools:layout_editor_absoluteX="132dp"
+        tools:layout_editor_absoluteY="554dp" />
+
+    <Button
+        android:id="@+id/buttonEditarPerfil"
+        android:layout_width="18dp"
+        android:layout_height="25dp"
+        android:text="Button"
+        app:layout_constraintBottom_toTopOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="225dp" />
+
+    <TextView
+        android:id="@+id/textViewLivrosLidos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Livros Lidos"
+        tools:layout_editor_absoluteX="28dp"
+        tools:layout_editor_absoluteY="208dp" />
+
+    <TextView
+        android:id="@+id/textViewEventosParticipados"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Eventos Participados"
+        tools:layout_editor_absoluteX="28dp"
+        tools:layout_editor_absoluteY="380dp" />
+
+    <TextView
+        android:id="@+id/textViewEventosMetaLeitura"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Meta de Leitura"
+        tools:layout_editor_absoluteX="34dp"
+        tools:layout_editor_absoluteY="554dp" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="?android:attr/windowBackground"
+        app:itemIconTint="@color/unifor_traditional_blue"
+        app:itemTextColor="@color/unifor_traditional_blue"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/bottom_nav_menu"
+        tools:layout_editor_absoluteX="0dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
