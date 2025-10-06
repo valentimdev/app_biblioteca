@@ -12,13 +12,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BibliotecaUnifor">
         <activity
+            android:name=".ItemCarrossel"
+            android:exported="false" />
+        <activity
             android:name=".Emprestimos"
             android:exported="false" />
         <activity
             android:name=".PerfilUsuario"
-            android:exported="false" />
-        <activity
-            android:name=".UserProfile"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
