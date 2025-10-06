@@ -4,18 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.example.bibliotecaunifor.databinding.ConfiguracoesBinding // A importação correta
+import com.example.bibliotecaunifor.databinding.ActivityConfiguracoesBinding // A importação correta
 import com.google.android.material.button.MaterialButton
 
 
 class ConfiguracoesActivity : AppCompatActivity() {
 
-    private lateinit var binding: ConfiguracoesBinding
+    private lateinit var binding: ActivityConfiguracoesBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ConfiguracoesBinding.inflate(layoutInflater)
+        binding = ActivityConfiguracoesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.tvRegulamento.setOnClickListener {
@@ -56,7 +56,8 @@ class ConfiguracoesActivity : AppCompatActivity() {
         val btnAlterar = dialogView.findViewById<MaterialButton>(R.id.btnAlterar)
 
         btnAlterar.setOnClickListener {
-            // Lógica para alterar a senha viria aqui
+            // futuramente logica de alterar a senha via ser aq
+
             alertDialog.dismiss()
         }
 
