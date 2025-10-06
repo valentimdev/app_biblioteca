@@ -63,7 +63,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:backgroundTint="#FFFFFF"
-        android:text="<-"
+        android:text="-"
         android:textColor="#000000"
         android:textColorLink="#902222"
         tools:layout_editor_absoluteX="5dp"
