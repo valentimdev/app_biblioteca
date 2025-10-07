@@ -55,17 +55,24 @@
         android:textColor="@color/white"
         android:textSize="18sp" />
 
+
 </LinearLayout
     >
 
-    <Button
+    <ImageButton
         android:id="@+id/voltarButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#FFFFFF"
-        android:text="-"
-        android:textColor="#000000"
-        android:textColorLink="#902222"
-        tools:layout_editor_absoluteX="5dp"
-        tools:layout_editor_absoluteY="16dp" />
+
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+
+        android:contentDescription="voltar"
+        android:src="?attr/homeAsUpIndicator"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/text_primary" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
