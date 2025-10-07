@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.example.bibliotecaunifor.databinding.ActivityConfiguracoesBinding // A importação correta
+import com.example.bibliotecaunifor.databinding.ActivityConfiguracoesBinding
 import com.google.android.material.button.MaterialButton
 
 
@@ -18,6 +18,9 @@ class ConfiguracoesActivity : AppCompatActivity() {
         binding = ActivityConfiguracoesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         binding.tvRegulamento.setOnClickListener {
             showRegulamentoDialog()
         }
@@ -25,13 +28,13 @@ class ConfiguracoesActivity : AppCompatActivity() {
         binding.tvAlterarSenha.setOnClickListener {
             showAlterarSenhaDialog()
         }
-//        binding.voltarButton.setOnClickListener {
-//            finish() // Fecha a tela atual e volta para a anterior
-//        }
-
 
     }
 
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
 
     private fun showRegulamentoDialog() {
         AlertDialog.Builder(this)
