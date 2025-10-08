@@ -12,13 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BibliotecaUnifor">
         <activity
-            android:name=".ItemCarrossel"
+            android:name=".base"
             android:exported="false" />
         <activity
-            android:name=".Emprestimos"
-            android:exported="false" />
-        <activity
-            android:name=".PerfilUsuario"
+            android:name=".EventosActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,12 +24,20 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".ItemCarrossel"
+            android:exported="false" />
+        <activity
+            android:name=".Emprestimos"
+            android:exported="false" />
+        <activity
+            android:name=".PerfilUsuario"
+            android:exported="false"></activity>
+        <activity
             android:name=".ConfiguracoesActivity"
-            android:exported="false">
-        </activity>
+            android:exported="false" />
         <activity
             android:name=".NotificacoesActivity"
-            android:exported="false"/>
+            android:exported="false" />
     </application>
 
 </manifest>

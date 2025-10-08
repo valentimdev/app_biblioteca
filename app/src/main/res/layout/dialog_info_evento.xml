@@ -1,19 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="300dp"
-    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="@drawable/dialog_rounded_background">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
     <TextView
-        android:id="@+id/textTituloEvento"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Nome do Evento"
-        android:textSize="18sp"
+        android:id="@+id/tvTituloEvento"
+        android:textSize="20sp"
         android:textStyle="bold"
-        android:gravity="center"/>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/tvDescricaoEvento"
+        android:layout_marginTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/tvDataHoraEvento"
+        android:layout_marginTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnInscreverEvento"
+        android:text="Inscrever-se"
+        android:layout_marginTop="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <com.google.android.material.chip.Chip
+        android:id="@+id/chipInscrito"
+        android:text="INSCRITO"
+        app:chipBackgroundColor="@color/unifor_traditional_blue"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
     <Button
         android:id="@+id/buttonFecharEvento"
@@ -22,4 +49,6 @@
         android:text="Fechar"
         android:layout_gravity="center"
         android:layout_marginTop="16dp"/>
+
 </LinearLayout>
+

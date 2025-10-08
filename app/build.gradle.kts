@@ -40,6 +40,7 @@ android {
 
 dependencies {
     implementation(libs.material)
+    implementation("com.applandeo:material-calendar-view:1.9.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
