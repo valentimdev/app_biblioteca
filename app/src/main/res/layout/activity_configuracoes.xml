@@ -20,9 +20,11 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/colorPrimary"
+        app:navigationIcon="?attr/homeAsUpIndicator"
         app:title="CONFIGURAÇÃO"
         app:titleTextColor="@color/text_on_primary"
-        app:navigationIcon="?attr/homeAsUpIndicator" />
+        tools:layout_editor_absoluteX="-11dp"
+        tools:layout_editor_absoluteY="228dp" />
 
 </com.google.android.material.appbar.AppBarLayout>
 
@@ -94,5 +96,17 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="?android:attr/windowBackground"
+        app:itemIconTint="@color/unifor_traditional_blue"
+        app:itemTextColor="@color/unifor_traditional_blue"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/bottom_nav_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
