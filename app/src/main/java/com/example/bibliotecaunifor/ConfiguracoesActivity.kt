@@ -39,9 +39,9 @@ class ConfiguracoesActivity : AppCompatActivity() {
     private fun showRegulamentoDialog() {
         AlertDialog.Builder(this)
             .setTitle("Regulamento da Biblioteca")
-            .setMessage("Aqui será exibido o texto completo do regulamento da biblioteca. " +
-                    "Este é um texto de exemplo para preencher o espaço enquanto a lógica " +
-                    "não é implementada.")
+            .setMessage("BLABLABLABLABLABLABLA" +
+                    "BLABLABLABLABLABLABLA" +
+                    "BLABLABLABLABLABLABLA")
             .setPositiveButton("FECHAR") { dialog, _ ->
                 dialog.dismiss()
             }
