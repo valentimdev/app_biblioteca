@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.bibliotecaunifor.adapters.LivroAdapter
 import com.example.bibliotecaunifor.adapters.EventoAdapter
 
-class PerfilUsuario : BaseActivity() {
+class PerfilUsuario: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
