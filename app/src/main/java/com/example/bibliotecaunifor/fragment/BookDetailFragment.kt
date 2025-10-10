@@ -31,4 +31,9 @@ class BookDetailFragment : Fragment(R.layout.fragment_book_detail) {
             )
         }
     }
+    override fun onResume() {
+        super.onResume()
+        (requireActivity() as MainActivity).setToolbar("LIVRO", showBack = true)
+    }
+
 }

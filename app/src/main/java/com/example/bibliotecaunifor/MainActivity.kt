@@ -1,38 +1,67 @@
 package com.example.bibliotecaunifor
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import com.example.bibliotecaunifor.databinding.ActivityMainBinding
 import com.example.bibliotecaunifor.CatalogFragment
-import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.bottomnavigation.BottomNavigationView
+
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var vb: ActivityMainBinding
+    lateinit var toolbar: MaterialToolbar
+    lateinit var bottom: BottomNavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        vb = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(vb.root)
+        setContentView(R.layout.activity_main)
+
+        toolbar = findViewById(R.id.toolbar)
+        bottom = findViewById(R.id.bottomNavigation)
+
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        toolbar.title = "CATALOGO" // título inicial, mude se quiser "Início"
+
+        // menu do sino
+        toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_notifications -> {
+                    startActivity(Intent(this, NotificacoesActivity::class.java))
+                    true
+                }
+                else -> false
+            }
+        }
 
         if (savedInstanceState == null) {
-            replace(HomeFragment())
+            replace(CatalogFragment())
+            bottom.selectedItemId = R.id.nav_catalog
         }
 
-        vb.bottomNavigation.setOnItemSelectedListener(navListener)
+        bottom.setOnItemSelectedListener {
+            when (it.itemId) {
+                R.id.nav_home    -> replace(HomeFragment())
+                R.id.nav_catalog -> replace(CatalogFragment())
+                R.id.nav_events  -> replace(EventsFragment())
+                R.id.nav_chat    -> replace(ChatFragment())
+                R.id.nav_profile -> replace(ProfileFragment())
+            }
+            true
+        }
     }
 
-    private val navListener = NavigationBarView.OnItemSelectedListener { item ->
-        when (item.itemId) {
-            R.id.nav_home -> replace(HomeFragment())
-            R.id.nav_catalog -> replace(CatalogFragment())
-            R.id.nav_events -> replace(EventsFragment())
-            R.id.nav_chat -> replace(ChatFragment())
-            R.id.nav_profile -> replace(ProfileFragment())
-            else -> false
+    fun setToolbar(title: String, showBack: Boolean) {
+        toolbar.title = title
+        supportActionBar?.setDisplayHomeAsUpEnabled(showBack)
+        toolbar.navigationIcon = if (showBack) AppCompatResources.getDrawable(this, R.drawable.baseline_arrow_back_24) else null
+        toolbar.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
         }
-        true
     }
 
     private fun replace(f: Fragment) {
@@ -41,6 +70,7 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 }
+
 
 
 class HomeFragment : Fragment(android.R.layout.simple_list_item_1)
