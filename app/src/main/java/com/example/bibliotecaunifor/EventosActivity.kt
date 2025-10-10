@@ -26,7 +26,7 @@ class EventosActivity : AppCompatActivity() {
         binding = ActivityEventosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Toolbar sem back arrow
+        // Toolbar sem back arrow q
         setSupportActionBar(binding.toolbarEventos)
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
         binding.toolbarEventos.navigationIcon = null
