@@ -39,9 +39,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (savedInstanceState == null) {
-            replace(CatalogFragment())
-            bottom.selectedItemId = R.id.nav_catalog
+            replace(HomeFragment())
+            bottom.selectedItemId = R.id.nav_home
         }
+
 
         bottom.setOnItemSelectedListener {
             when (it.itemId) {
@@ -58,22 +59,20 @@ class MainActivity : AppCompatActivity() {
     fun setToolbar(title: String, showBack: Boolean) {
         toolbar.title = title
         supportActionBar?.setDisplayHomeAsUpEnabled(showBack)
-        toolbar.navigationIcon = if (showBack) AppCompatResources.getDrawable(this, R.drawable.baseline_arrow_back_24) else null
-        toolbar.setNavigationOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
+        toolbar.navigationIcon = if (showBack)
+            AppCompatResources.getDrawable(this, R.drawable.baseline_arrow_back_24)
+        else null
+        toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
     }
+
 
     private fun replace(f: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, f)
             .commit()
     }
+
 }
 
 
 
-class HomeFragment : Fragment(android.R.layout.simple_list_item_1)
-class EventsFragment : Fragment(android.R.layout.simple_list_item_1)
-class ChatFragment : Fragment(android.R.layout.simple_list_item_1)
-class ProfileFragment : Fragment(android.R.layout.simple_list_item_1)
