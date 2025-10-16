@@ -5,8 +5,9 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
-import com.example.bibliotecaunifor.databinding.ActivityMainBinding
-import com.example.bibliotecaunifor.CatalogFragment
+import com.example.bibliotecaunifor.fragment.ChatFragment
+import com.example.bibliotecaunifor.fragment.EventsFragment
+import com.example.bibliotecaunifor.fragment.ProfileFragment
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
