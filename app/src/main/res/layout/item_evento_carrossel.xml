@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="160dp"
+    android:layout_height="100dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
+    android:elevation="4dp"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/tvTituloEventoCarrossel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="Título do Evento"
+        android:textColor="@color/unifor_traditional_blue"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:gravity="center" />
+
+</androidx.cardview.widget.CardView>

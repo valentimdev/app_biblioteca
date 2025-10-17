@@ -15,6 +15,24 @@
         android:textStyle="bold"
         android:gravity="center"/>
 
+    <TextView
+        android:id="@+id/textDescricaoLivro"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"/>
+
+    <TextView
+        android:id="@+id/textDataEmprestado"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"/>
+
+    <TextView
+        android:id="@+id/textDataDevolucao"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"/>
+
     <Button
         android:id="@+id/buttonFechar"
         android:layout_width="wrap_content"
