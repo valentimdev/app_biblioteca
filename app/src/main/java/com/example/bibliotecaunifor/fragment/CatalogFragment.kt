@@ -21,7 +21,7 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
 
     override fun onResume() {
         super.onResume()
-        (requireActivity() as MainActivity).setToolbar("CATALOGO", showBack = false)
+        (requireActivity() as MainActivity).configureToolbarFor(this)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

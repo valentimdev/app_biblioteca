@@ -29,7 +29,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onResume() {
         super.onResume()
-        (requireActivity() as MainActivity).setToolbar("INICIO", showBack = false)
+        (requireActivity() as MainActivity).configureToolbarFor(this)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Bloquear usuário?"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:paddingBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnBloquear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SIM"/>
+
+    <Button
+        android:id="@+id/btnCancelar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="NÃO"/>
+
+    <Button
+        android:id="@+id/btnHistorico"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HISTÓRICO"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/black"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>
