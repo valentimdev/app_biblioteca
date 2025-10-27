@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Estilo para botões primários -->
+    <style name="ButtonPrimary" parent="Widget.Material3.Button">
+        <item name="android:layout_height">60dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/unifor_vibrant_blue</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <!-- Estilo para botões secundários -->
+    <style name="ButtonSecondary" parent="Widget.Material3.Button">
+        <item name="android:layout_height">60dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/unifor_traditional_blue</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <!-- Estilo para botões de logout -->
+    <style name="ButtonLogout" parent="Widget.Material3.Button">
+        <item name="android:layout_height">60dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/colorPrimaryDark</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <!-- Estilo para cards -->
+    <style name="CardStyle" parent="Widget.Material3.CardView">
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">4dp</item>
+    </style>
+
+    <!-- Estilo para cards de destaque -->
+    <style name="CardStyleHighlight" parent="Widget.Material3.CardView">
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">8dp</item>
+    </style>
+
+    <!-- Estilo para títulos principais -->
+    <style name="TextTitle">
+        <item name="android:textColor">@color/unifor_vibrant_blue</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Estilo para títulos secundários -->
+    <style name="TextSubtitle">
+        <item name="android:textColor">@color/unifor_vibrant_blue</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Estilo para texto de corpo -->
+    <style name="TextBody">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <!-- Estilo para links -->
+    <style name="TextLink">
+        <item name="android:textColor">@color/unifor_vibrant_blue</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Estilo para estatísticas -->
+    <style name="TextStatistic">
+        <item name="android:textColor">@color/unifor_vibrant_blue</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Estilo para labels de estatísticas -->
+    <style name="TextStatisticLabel">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+</resources>
