@@ -78,24 +78,24 @@
 
     </LinearLayout>
 
-
     <TextView
         android:id="@+id/tvSair"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="SAIR"
-        android:textColor="@color/colorPrimary"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:gravity="center"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="112dp"
+        android:background="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
-        android:background="?attr/selectableItemBackground"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="SAIR"
+        android:textColor="@color/colorPrimary"
+        android:textSize="16sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"

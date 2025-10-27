@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">BibliotecaUnifor</string>
-    
+
     <!-- Login Activity -->
     <string name="login_title">Login</string>
     <string name="login_welcome">Unifor Bibliotecas</string>
@@ -9,13 +9,13 @@
     <string name="login_button">Entrar</string>
     <string name="login_forgot_password">Esqueceu a senha?</string>
     <string name="login_no_account">Não tem uma conta? </string>
-    <string name="login_register">Cadastre-se</string>
+    <string name="login_register"> Cadastre-se</string>
     <string name="login_error_matricula_required">Matrícula é obrigatória</string>
     <string name="login_error_senha_required">Senha é obrigatória</string>
     <string name="login_error_senha_length">Senha deve ter pelo menos 6 caracteres</string>
     <string name="login_error_invalid_credentials">Credenciais inválidas</string>
     <string name="login_admin_credentials">admin</string>
-    
+
     <!-- Admin Activity -->
     <string name="admin_title">Painel Administrativo</string>
     <string name="admin_welcome">Bem-vindo, Administrador!</string>
@@ -30,7 +30,7 @@
     <string name="admin_stats_books">Livros</string>
     <string name="admin_stats_loans">Empréstimos</string>
     <string name="admin_coming_soon">Em desenvolvimento</string>
-    
+
     <!-- Common -->
     <string name="error_generic">Ocorreu um erro inesperado</string>
     <string name="success">Sucesso</string>

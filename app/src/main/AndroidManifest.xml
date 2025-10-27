@@ -12,6 +12,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BibliotecaUnifor">
         <activity
+            android:name=".esqueceu_senha"
+            android:exported="false" />
+        <activity
+            android:name=".activity_cadastro"
+            android:exported="false" />
+        <activity
+            android:name=".CadastroActivity"
+            android:exported="false" />
+        <activity
             android:name=".ItemCarrossel"
             android:exported="false" />
         <activity
@@ -28,6 +37,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -37,8 +47,6 @@
         <activity
             android:name=".AdminActivity"
             android:exported="false" />
-
-
     </application>
 
 </manifest>
