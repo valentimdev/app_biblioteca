@@ -54,8 +54,8 @@ class LoginActivity : AppCompatActivity() {
         }
 
         cadastroLinkTextView.setOnClickListener {
-            // TODO: Implementar recuperação de senha
-            Toast.makeText(this, getString(R.string.admin_coming_soon), Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, EsqueceuSenhaActivity::class.java)
+            startActivity(intent)
         }
 
         cadastrarTextView.setOnClickListener {
@@ -69,8 +69,10 @@ class LoginActivity : AppCompatActivity() {
         val senha = senhaEditText.text.toString().trim()
 
         if (validateInput(matricula, senha)) {
-            // Simulação de login - em produção, fazer validação com backend
-            if (matricula == getString(R.string.login_admin_credentials) && senha == getString(R.string.login_admin_credentials)) {
+            // Simulação de login - sem backend
+            if (matricula == getString(R.string.login_admin_credentials) &&
+                senha == getString(R.string.login_admin_credentials)
+            ) {
                 // Login como administrador
                 val intent = Intent(this, AdminActivity::class.java)
                 startActivity(intent)
@@ -81,7 +83,11 @@ class LoginActivity : AppCompatActivity() {
                 startActivity(intent)
                 finish()
             } else {
-                Toast.makeText(this, getString(R.string.login_error_invalid_credentials), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.login_error_invalid_credentials),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }

@@ -1,12 +1,12 @@
 package com.example.bibliotecaunifor
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.bibliotecaunifor.databinding.ActivityConfiguracoesBinding
 import com.google.android.material.button.MaterialButton
-
 
 class ConfiguracoesActivity : AppCompatActivity() {
 
@@ -21,14 +21,20 @@ class ConfiguracoesActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        // 🔹 Botão de regulamento
         binding.tvRegulamento.setOnClickListener {
             showRegulamentoDialog()
         }
 
+        // 🔹 Botão de alterar senha
         binding.tvAlterarSenha.setOnClickListener {
             showAlterarSenhaDialog()
         }
 
+        // 🔹 Botão de sair (logout)
+        binding.tvSair.setOnClickListener {
+            showLogoutDialog()
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -39,9 +45,11 @@ class ConfiguracoesActivity : AppCompatActivity() {
     private fun showRegulamentoDialog() {
         AlertDialog.Builder(this)
             .setTitle("Regulamento da Biblioteca")
-            .setMessage("BLABLABLABLABLABLABLA" +
-                    "BLABLABLABLABLABLABLA" +
-                    "BLABLABLABLABLABLABLA")
+            .setMessage(
+                "BLABLABLABLABLABLABLA\n" +
+                        "BLABLABLABLABLABLABLA\n" +
+                        "BLABLABLABLABLABLABLA"
+            )
             .setPositiveButton("FECHAR") { dialog, _ ->
                 dialog.dismiss()
             }
@@ -59,8 +67,7 @@ class ConfiguracoesActivity : AppCompatActivity() {
         val btnAlterar = dialogView.findViewById<MaterialButton>(R.id.btnAlterar)
 
         btnAlterar.setOnClickListener {
-            // futuramente logica de alterar a senha via ser aq
-
+            // futuramente lógica de alterar a senha será aqui
             alertDialog.dismiss()
         }
 
@@ -68,5 +75,22 @@ class ConfiguracoesActivity : AppCompatActivity() {
         alertDialog.show()
     }
 
-}
+    private fun showLogoutDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Sair da conta")
+            .setMessage("Tem certeza que deseja sair?")
+            .setPositiveButton("SAIR") { _, _ ->
+                logoutAndGoToLogin()
+            }
+            .setNegativeButton("CANCELAR", null)
+            .show()
+    }
 
+    private fun logoutAndGoToLogin() {
+
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
+}

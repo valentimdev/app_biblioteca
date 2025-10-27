@@ -30,14 +30,14 @@
         <item name="cornerRadius">12dp</item>
     </style>
 
-    <!-- Estilo para cards -->
-    <style name="CardStyle" parent="Widget.Material3.CardView">
+    <!-- Estilo padrão para cards -->
+    <style name="CardStyle" parent="Widget.Material3.CardView.Filled">
         <item name="cardCornerRadius">12dp</item>
         <item name="cardElevation">4dp</item>
     </style>
 
     <!-- Estilo para cards de destaque -->
-    <style name="CardStyleHighlight" parent="Widget.Material3.CardView">
+    <style name="CardStyleHighlight" parent="Widget.Material3.CardView.Filled">
         <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">8dp</item>
     </style>
