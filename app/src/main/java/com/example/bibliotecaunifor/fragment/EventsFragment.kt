@@ -29,7 +29,7 @@ class EventsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        (requireActivity() as MainActivity).setToolbar("EVENTOS", showBack = false)
+        (requireActivity() as MainActivity).configureToolbarFor(this)
     }
 
     override fun onCreateView(

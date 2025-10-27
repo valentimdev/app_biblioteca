@@ -2,27 +2,25 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- HEADER FIXO -->
+    <!-- TOOLBAR -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/unifor_traditional_blue"
-        app:titleCentered="true"
+        app:title="BibliotecaUnifor"
         app:titleTextColor="@color/white"
-        app:navigationIconTint="@color/white"
-        app:menu="@menu/top_app_bar" />
+        app:navigationIconTint="@color/white" />
 
-    <!-- CONTEÚDO (fragments) -->
+    <!-- CONTEÚDO -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"/>
+        android:layout_marginTop="?attr/actionBarSize" />
 
     <!-- BOTTOM NAV -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -33,5 +31,5 @@
         android:background="@color/unifor_traditional_blue"
         app:menu="@menu/bottom_nav_menu"
         app:itemIconTint="@color/white"
-        app:itemTextColor="@color/white"/>
+        app:itemTextColor="@color/white" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

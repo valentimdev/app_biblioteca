@@ -21,7 +21,7 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
 
     override fun onResume() {
         super.onResume()
-        (requireActivity() as MainActivity).setToolbar("PERFIL", showBack = false)
+        (requireActivity() as MainActivity).configureToolbarFor(this)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

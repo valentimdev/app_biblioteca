@@ -15,7 +15,10 @@
         android:id="@+id/nav_events"
         android:icon="@drawable/outline_add_24"
         android:title="Eventos" />
-
+    <item
+        android:id="@+id/nav_gestao"
+        android:icon="@drawable/ic_gestao_filled"
+        android:title="Gestão" />
     <item
         android:id="@+id/nav_chat"
         android:icon="@drawable/outline_add_24"
