@@ -12,10 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BibliotecaUnifor">
         <activity
-            android:name=".esqueceu_senha"
-            android:exported="false" />
-        <activity
-            android:name=".activity_cadastro"
+            android:name=".EsqueceuSenhaActivity"
             android:exported="false" />
         <activity
             android:name=".CadastroActivity"
