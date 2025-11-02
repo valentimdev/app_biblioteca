@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    card_view:cardCornerRadius="12dp"
+    card_view:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tvNomeEvento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nome do Evento"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/colorPrimary"/>
+
+        <TextView
+            android:id="@+id/tvLocalEvento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Local:" />
+
+        <TextView
+            android:id="@+id/tvVagasEvento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vagas:" />
+
+        <TextView
+            android:id="@+id/tvDataEvento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Data:" />
+
+        <TextView
+            android:id="@+id/tvHorarioEvento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Horário:" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="8dp">
+
+            <Switch
+                android:id="@+id/switchAtivo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ativo" />
+
+            <Switch
+                android:id="@+id/switchInscricao"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Inscrição" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

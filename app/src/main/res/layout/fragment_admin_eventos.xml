@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp">
+
+    <!-- BUSCA -->
+    <EditText
+        android:id="@+id/etBuscarEvento"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Buscar eventos..."
+        android:inputType="text"
+        android:drawableStart="@android:drawable/ic_menu_search"
+        android:drawablePadding="8dp"
+        android:padding="8dp"
+        android:background="@drawable/bg_edittext_rounded"/>
+
+    <!-- BOTÃO DE FILTRO -->
+    <ImageButton
+        android:id="@+id/btnFiltrarEvento"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="end"
+        android:layout_marginTop="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_sort_by_size"
+        android:contentDescription="Filtrar eventos"/>
+
+    <!-- LISTA DE EVENTOS -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerAdminEventos"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingTop="8dp"/>
+</LinearLayout>
