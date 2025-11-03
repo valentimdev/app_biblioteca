@@ -2,6 +2,7 @@
 package br.unifor.biblioteca.admin
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.admin.UsersAdapter
+import com.example.bibliotecaunifor.fragment.AdminEventsFragment
 import com.google.android.material.appbar.MaterialToolbar
 
 class GestaoFragment : Fragment() {
@@ -31,6 +33,11 @@ class GestaoFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _b = FragmentAdminGestaoBinding.inflate(inflater, container, false)
         return b.root
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -85,17 +92,28 @@ class GestaoFragment : Fragment() {
     private fun setupToolbar() {
         val toolbar = requireActivity().findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.title = "GESTÃO"
-        toolbar.menu.clear()
-        toolbar.inflateMenu(R.menu.top_app_bar)
+    }
 
-        toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.action_notifications -> {
-                    // Ação do sino
-                    true
-                }
-                else -> false
+    override fun onCreateOptionsMenu(menu: android.view.Menu, inflater: android.view.MenuInflater) {
+        menu.clear()
+        inflater.inflate(R.menu.menu_gestao, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_notifications -> {
+                true
             }
+            R.id.action_eventos -> {
+                Log.d("GestaoFragment", "Clique no menu de eventos")
+                requireActivity().supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, AdminEventsFragment())
+                    .addToBackStack(null)
+                    .commit()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 

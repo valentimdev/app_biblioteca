@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import br.unifor.biblioteca.admin.GestaoFragment
+import com.example.bibliotecaunifor.fragment.AdminEventsFragment
 import com.example.bibliotecaunifor.fragment.ChatFragment
 import com.example.bibliotecaunifor.fragment.EventsFragment
 import com.example.bibliotecaunifor.fragment.ProfileFragment
@@ -73,6 +74,14 @@ class MainActivity : AppCompatActivity() {
                 toolbar.inflateMenu(R.menu.top_app_bar)
                 toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             }
+            is AdminEventsFragment -> {
+                toolbar.title = "EVENTOS"
+                toolbar.navigationIcon = AppCompatResources.getDrawable(this, R.drawable.baseline_arrow_back_24)
+                supportActionBar?.setDisplayHomeAsUpEnabled(true)
+                toolbar.setNavigationOnClickListener {
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
             is CatalogFragment -> {
                 toolbar.title = "CATÁLOGO"
                 clearBackAndMenu()
@@ -92,7 +101,8 @@ class MainActivity : AppCompatActivity() {
             }
             else -> {
                 toolbar.title = "BibliotecaUnifor"
-                clearBackAndMenu()
+                toolbar.navigationIcon = null
+                supportActionBar?.setDisplayHomeAsUpEnabled(false)
             }
         }
     }
