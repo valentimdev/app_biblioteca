@@ -14,16 +14,15 @@ import com.example.bibliotecaunifor.Evento
 import com.example.bibliotecaunifor.MainActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.EventosAdapter
-import com.example.bibliotecaunifor.databinding.ActivityEventosBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
 import java.text.SimpleDateFormat
 import java.util.*
 
-class EventsFragment : Fragment() {
+class EventsFragment : Fragment(R.layout.fragment_events) {
 
-    private var _binding: ActivityEventosBinding? = null
-    private val binding get() = _binding!!
+    private lateinit var recyclerViewEventos: androidx.recyclerview.widget.RecyclerView
+    private lateinit var calendarView: com.applandeo.materialcalendarview.CalendarView
     private lateinit var todosEventos: List<Evento>
     private var diaSelecionado: Calendar? = null
 
@@ -32,40 +31,23 @@ class EventsFragment : Fragment() {
         (requireActivity() as MainActivity).configureToolbarFor(this)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        _binding = ActivityEventosBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
-        binding.recyclerViewEventos.layoutManager = LinearLayoutManager(requireContext())
+        recyclerViewEventos = view.findViewById(R.id.recyclerViewEventos)
+        calendarView = view.findViewById(R.id.calendarView)
+        recyclerViewEventos.layoutManager = LinearLayoutManager(requireContext())
 
         todosEventos = listOf(
-            Evento(
-                "Palestra de Literatura",
-                Calendar.getInstance().apply { set(2025, 9, 12, 14, 0) },
-                "Uma palestra sobre obras clássicas e modernas da literatura."
-            ),
-            Evento(
-                "Clube de Leitura",
-                Calendar.getInstance().apply { set(2025, 9, 18, 18, 0) },
-                "Encontro semanal para discutir livros escolhidos pelo grupo."
-            ),
-            Evento(
-                "Oficina de Escrita",
-                Calendar.getInstance().apply { set(2025, 9, 18, 10, 0) },
-                "Aprenda técnicas de escrita criativa e desenvolvimento de personagens."
-            )
+            Evento("Palestra de Literatura", Calendar.getInstance().apply { set(2025, 9, 12, 14, 0) },
+                "Uma palestra sobre obras clássicas e modernas da literatura."),
+            Evento("Clube de Leitura", Calendar.getInstance().apply { set(2025, 9, 18, 18, 0) },
+                "Encontro semanal para discutir livros escolhidos pelo grupo."),
+            Evento("Oficina de Escrita", Calendar.getInstance().apply { set(2025, 9, 18, 10, 0) },
+                "Aprenda técnicas de escrita criativa e desenvolvimento de personagens.")
         )
 
         atualizarEventosNoCalendario()
 
-        binding.calendarView.setOnDayClickListener(object : OnDayClickListener {
+        calendarView.setOnDayClickListener(object : OnDayClickListener {
             override fun onDayClick(eventDay: EventDay) {
                 val dataSelecionada = eventDay.calendar
                 if (diaSelecionado != null && ehMesmoDia(diaSelecionado!!, dataSelecionada)) {
@@ -86,7 +68,7 @@ class EventsFragment : Fragment() {
     private fun atualizarEventosNoCalendario() {
         val eventos = todosEventos.map { EventDay(it.data, R.drawable.ic_event_marker) }.toMutableList()
         diaSelecionado?.let { eventos.add(EventDay(it, R.drawable.ic_day_selected)) }
-        binding.calendarView.setEvents(eventos)
+        calendarView.setEvents(eventos)
     }
 
     private fun ehMesmoDia(c1: Calendar, c2: Calendar): Boolean {
@@ -101,7 +83,7 @@ class EventsFragment : Fragment() {
     }
 
     private fun mostrarEventos(eventos: List<Evento>) {
-        binding.recyclerViewEventos.adapter = EventosAdapter(eventos) { evento ->
+        recyclerViewEventos.adapter = EventosAdapter(eventos) { evento ->
             mostrarDetalhesEvento(evento)
         }
     }
@@ -132,15 +114,9 @@ class EventsFragment : Fragment() {
             }
         }
 
-        val buttonFechar = view.findViewById<Button>(R.id.buttonFecharEvento)
-        buttonFechar.setOnClickListener { dialog.dismiss() }
+        view.findViewById<Button>(R.id.buttonFecharEvento).setOnClickListener { dialog.dismiss() }
 
         dialog.setContentView(view)
         dialog.show()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

@@ -19,12 +19,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     )
 
     private val recs = listOf(
-        Book("10","Onde os Fracos Não Têm Vez","Cormac McCarthy"),
-        Book("11","A Estrada","Cormac McCarthy"),
-        Book("12","Sobre o Tempo","Autor X"),
-        Book("13","Falando de Brinquedos e Luzes","Autor Y"),
-        Book("14","Eu Sou Malala","Malala Yousafzai"),
-        Book("15","O Caçador de Pipas","Khaled Hosseini")
+        Book("10", "Onde os Fracos Não Têm Vez", "Cormac McCarthy",),
+        Book("11", "A Estrada", "Cormac McCarthy",),
+        Book("12", "Sobre o Tempo", "Autor X",),
+        Book("13", "Falando de Brinquedos e Luzes", "Autor Y",),
+        Book("14", "Eu Sou Malala", "Malala Yousafzai",),
+        Book("15", "O Caçador de Pipas", "Khaled Hosseini",)
     )
 
     override fun onResume() {
