@@ -2,7 +2,8 @@ package com.example.bibliotecaunifor
 
 data class Book(
     val id: String,
-    val title: String,
-    val author: String,
-    val coverRes: Int? = null
+    var nome: String,
+    var autor: String,
+    var oculto: Boolean = false,
+    var emprestimoHabilitado: Boolean = true
 )

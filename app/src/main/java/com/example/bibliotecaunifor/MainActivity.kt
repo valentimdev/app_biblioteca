@@ -1,6 +1,5 @@
 package com.example.bibliotecaunifor
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
@@ -17,6 +16,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var toolbar: MaterialToolbar
     private lateinit var bottom: BottomNavigationView
+    private var onAddClick: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,21 +28,17 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
-        // Clique no sino (vale pra qualquer tela que inflar o menu com esse item)
         toolbar.setOnMenuItemClickListener { item ->
-            val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-            if (currentFragment != null && currentFragment.onOptionsItemSelected(item)) {
-                true
-            } else {
-                when (item.itemId) {
-                    R.id.action_notifications -> {
-                        // Trate aqui
-                        true
-                    }
-                    else -> false
+            when (item.itemId) {
+                R.id.action_notifications -> true
+                R.id.action_add -> {
+                    onAddClick?.invoke()
+                    true
                 }
+                else -> false
             }
         }
+
         if (savedInstanceState == null) {
             switchTo(HomeFragment())
             bottom.selectedItemId = R.id.nav_home
@@ -50,11 +46,11 @@ class MainActivity : AppCompatActivity() {
 
         bottom.setOnItemSelectedListener {
             when (it.itemId) {
-                R.id.nav_home    -> switchTo(HomeFragment())
+                R.id.nav_home -> switchTo(HomeFragment())
                 R.id.nav_catalog -> switchTo(CatalogFragment())
-                R.id.nav_events  -> switchTo(EventsFragment())
-                R.id.nav_gestao  -> switchTo(GestaoFragment())
-                R.id.nav_chat    -> switchTo(ChatFragment())
+                R.id.nav_events -> switchTo(EventsFragment())
+                R.id.nav_gestao -> switchTo(GestaoFragment())
+                R.id.nav_chat -> switchTo(ChatFragment())
                 R.id.nav_profile -> switchTo(ProfileFragment())
             }
             true
@@ -75,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                 toolbar.title = "GESTÃO"
                 toolbar.navigationIcon = AppCompatResources.getDrawable(this, R.drawable.baseline_arrow_back_24)
                 supportActionBar?.setDisplayHomeAsUpEnabled(true)
-                toolbar.inflateMenu(R.menu.top_app_bar) // exibe o sino
+                toolbar.inflateMenu(R.menu.top_app_bar)
                 toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             }
             is AdminEventsFragment -> {
@@ -89,6 +85,7 @@ class MainActivity : AppCompatActivity() {
             is CatalogFragment -> {
                 toolbar.title = "CATÁLOGO"
                 clearBackAndMenu()
+                if (isAdminUser()) toolbar.inflateMenu(R.menu.menu_add)
             }
             is EventsFragment -> {
                 toolbar.title = "EVENTOS"
@@ -110,13 +107,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun isAdminUser(): Boolean {
+        // Mock temporário
+        return true
+    }
+
+    fun setAddButtonListener(listener: () -> Unit) {
+        onAddClick = listener
+    }
+
     private fun clearBackAndMenu() {
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
         toolbar.navigationIcon = null
-        // menu já foi limpo em toolbar.menu.clear()
     }
 }
-
-
-
-
