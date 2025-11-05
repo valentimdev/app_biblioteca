@@ -1,4 +1,4 @@
-package com.example.bibliotecaunifor
+package com.example.bibliotecaunifor.fragment
 
 import android.app.AlertDialog
 import android.os.Bundle
@@ -11,7 +11,12 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.bibliotecaunifor.Book
+import com.example.bibliotecaunifor.BookDetailFragment
+import com.example.bibliotecaunifor.MainActivity
+import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.BookAdapter
+import com.example.bibliotecaunifor.admin.AdminActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
@@ -38,21 +43,25 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
         adapter = BookAdapter(sample, isAdmin) { action, book ->
             when (action) {
                 "detail" -> parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, BookDetailFragment.new(book))
+                    .replace(R.id.fragment_container, BookDetailFragment.newInstance(book, isAdmin))
                     .addToBackStack(null)
                     .commit()
+
                 "edit" -> abrirDialogLivro(book)
                 "remove" -> removerLivro(book)
+
                 "toggleEmprestimo" -> {
                     book.emprestimoHabilitado = !book.emprestimoHabilitado
                     adapter.notifyDataSetChanged()
                 }
+
                 "toggleVisibilidade" -> {
                     book.oculto = !book.oculto
                     adapter.notifyDataSetChanged()
                 }
             }
         }
+
         rv.adapter = adapter
 
         // botão de filtro (abre o mesmo dialog multiopção que no admin eventos)
@@ -69,9 +78,7 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
         }
 
         // botão de adicionar no header (configurado pela MainActivity)
-        (requireActivity() as? MainActivity)?.setAddButtonListener {
-            abrirDialogLivro()
-        }
+
     }
 
     private fun abrirDialogFiltros() {
@@ -144,3 +151,4 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
             .show()
     }
 }
+

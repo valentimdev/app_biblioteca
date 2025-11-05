@@ -7,6 +7,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.bibliotecaunifor.admin.AdminActivity
 import com.google.android.material.appbar.MaterialToolbar
 
 class LoginActivity : AppCompatActivity() {
@@ -14,6 +15,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var matriculaEditText: EditText
     private lateinit var senhaEditText: EditText
     private lateinit var loginButton: Button
+    private lateinit var adminButton: Button
     private lateinit var cadastroLinkTextView: TextView
     private lateinit var cadastrarTextView: TextView
     private lateinit var toolbar: MaterialToolbar
@@ -31,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
         matriculaEditText = findViewById(R.id.matriculaEditText)
         senhaEditText = findViewById(R.id.senhaEditText)
         loginButton = findViewById(R.id.loginButton)
+        adminButton = findViewById(R.id.btnAdmin)   // 👈 novo
         cadastroLinkTextView = findViewById(R.id.cadastroLinkTextView)
         cadastrarTextView = findViewById(R.id.cadastrar)
         toolbar = findViewById(R.id.toolbar)
@@ -49,8 +52,15 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
+        // login normal
         loginButton.setOnClickListener {
             performLogin()
+        }
+
+        // atalho para admin (sem validar nada, por enquanto)
+        adminButton.setOnClickListener {
+            val intent = Intent(this, AdminActivity::class.java)
+            startActivity(intent)
         }
 
         cadastroLinkTextView.setOnClickListener {
