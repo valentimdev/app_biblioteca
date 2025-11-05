@@ -79,7 +79,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         rv.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         rv.adapter = RecommendationAdapter(recs) { book ->
             parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, BookDetailFragment.new(book))
+                .replace(R.id.fragment_container, BookDetailFragment.newInstance(book, false)
+                )
                 .addToBackStack(null)
                 .commit()
         }
