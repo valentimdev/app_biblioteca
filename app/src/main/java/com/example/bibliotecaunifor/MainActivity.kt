@@ -28,17 +28,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
-        toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.action_notifications -> true
-                R.id.action_add -> {
-                    onAddClick?.invoke()
-                    true
-                }
-                else -> false
-            }
-        }
-
         if (savedInstanceState == null) {
             switchTo(HomeFragment())
             bottom.selectedItemId = R.id.nav_home
@@ -71,8 +60,21 @@ class MainActivity : AppCompatActivity() {
                 toolbar.title = "GESTÃO"
                 toolbar.navigationIcon = AppCompatResources.getDrawable(this, R.drawable.baseline_arrow_back_24)
                 supportActionBar?.setDisplayHomeAsUpEnabled(true)
-                toolbar.inflateMenu(R.menu.top_app_bar)
+                toolbar.inflateMenu(R.menu.menu_gestao)
                 toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+                toolbar.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.action_notifications -> true
+                        R.id.action_eventos -> {
+                            supportFragmentManager.beginTransaction()
+                                .replace(R.id.fragment_container, AdminEventsFragment())
+                                .addToBackStack(null)
+                                .commit()
+                            true
+                        }
+                        else -> false
+                    }
+                }
             }
             is AdminEventsFragment -> {
                 toolbar.title = "EVENTOS"
@@ -86,6 +88,15 @@ class MainActivity : AppCompatActivity() {
                 toolbar.title = "CATÁLOGO"
                 clearBackAndMenu()
                 if (isAdminUser()) toolbar.inflateMenu(R.menu.menu_add)
+                toolbar.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.action_add -> {
+                            onAddClick?.invoke()
+                            true
+                        }
+                        else -> false
+                    }
+                }
             }
             is EventsFragment -> {
                 toolbar.title = "EVENTOS"
@@ -108,7 +119,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isAdminUser(): Boolean {
-        // Mock temporário
         return true
     }
 
@@ -119,5 +129,6 @@ class MainActivity : AppCompatActivity() {
     private fun clearBackAndMenu() {
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
         toolbar.navigationIcon = null
+        toolbar.menu.clear()
     }
 }
