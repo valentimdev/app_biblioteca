@@ -107,6 +107,6 @@
         app:itemTextColor="@color/unifor_traditional_blue"
         app:labelVisibilityMode="labeled"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:menu="@menu/bottom_nav_menu" />
+        app:menu="@menu/bottom_nav_admin" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

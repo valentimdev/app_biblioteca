@@ -49,7 +49,6 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_home -> switchTo(HomeFragment())
                 R.id.nav_catalog -> switchTo(CatalogFragment())
                 R.id.nav_events -> switchTo(EventsFragment())
-                R.id.nav_gestao -> switchTo(GestaoFragment())
                 R.id.nav_chat -> switchTo(ChatFragment())
                 R.id.nav_profile -> switchTo(ProfileFragment())
             }

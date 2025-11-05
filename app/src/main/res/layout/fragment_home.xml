@@ -45,13 +45,6 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1" />
 
-                    <ImageButton
-                        android:id="@+id/btnLoanOptions"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Opções"
-                        android:src="@drawable/baseline_settings_24" />
                 </LinearLayout>
 
                 <LinearLayout

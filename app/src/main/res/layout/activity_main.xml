@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="@color/unifor_traditional_blue"
-        app:menu="@menu/bottom_nav_menu"
+        app:menu="@menu/bottom_nav_user"
         app:itemIconTint="@color/white"
         app:itemTextColor="@color/white" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
