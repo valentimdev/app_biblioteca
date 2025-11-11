@@ -92,31 +92,50 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         val dialog = BottomSheetDialog(requireContext())
         val view = layoutInflater.inflate(R.layout.dialog_info_evento, null)
 
-        view.findViewById<TextView>(R.id.tvTituloEvento).text = evento.titulo
-        view.findViewById<TextView>(R.id.tvDescricaoEvento).text = evento.descricao
-        val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        view.findViewById<TextView>(R.id.tvDataHoraEvento).text = formato.format(evento.data.time)
-
+        val tvTitulo = view.findViewById<TextView>(R.id.tvTituloEvento)
+        val tvDescricao = view.findViewById<TextView>(R.id.tvDescricaoEvento)
+        val tvDataHora = view.findViewById<TextView>(R.id.tvDataHoraEvento)
         val btnInscrever = view.findViewById<Button>(R.id.btnInscreverEvento)
         val chipInscrito = view.findViewById<Chip>(R.id.chipInscrito)
+        val btnFechar = view.findViewById<Button>(R.id.buttonFecharEvento)
 
-        if (evento.inscrito) {
-            btnInscrever.visibility = View.GONE
-            chipInscrito.visibility = View.VISIBLE
-        } else {
-            btnInscrever.visibility = View.VISIBLE
-            chipInscrito.visibility = View.GONE
-            btnInscrever.setOnClickListener {
-                evento.inscrito = true
-                btnInscrever.visibility = View.GONE
-                chipInscrito.visibility = View.VISIBLE
-                dialog.dismiss()
+        tvTitulo.text = evento.titulo
+        tvDescricao.text = evento.descricao
+        val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        tvDataHora.text = formato.format(evento.data.time)
+
+        atualizarEstadoInscricao(evento.inscrito, btnInscrever, chipInscrito)
+
+        // alterna inscrição/cancelamento
+        btnInscrever.setOnClickListener {
+            evento.inscrito = !evento.inscrito
+            atualizarEstadoInscricao(evento.inscrito, btnInscrever, chipInscrito)
+
+            if (evento.inscrito) {
+                btnInscrever.text = "Cancelar inscrição"
+            } else {
+                btnInscrever.text = "Inscrever-se"
             }
         }
 
-        view.findViewById<Button>(R.id.buttonFecharEvento).setOnClickListener { dialog.dismiss() }
+        btnFechar.setOnClickListener { dialog.dismiss() }
 
         dialog.setContentView(view)
         dialog.show()
     }
+
+    private fun atualizarEstadoInscricao(
+        inscrito: Boolean,
+        btnInscrever: Button,
+        chip: Chip
+    ) {
+        if (inscrito) {
+            btnInscrever.text = "Cancelar inscrição"
+            chip.visibility = View.VISIBLE
+        } else {
+            btnInscrever.text = "Inscrever-se"
+            chip.visibility = View.GONE
+        }
+    }
+
 }

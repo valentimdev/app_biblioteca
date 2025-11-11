@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <EditText
+        android:id="@+id/edtTitulo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Título do evento" />
+
+    <EditText
+        android:id="@+id/edtLocal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Local"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
+        android:id="@+id/edtVagas"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Vagas"
+        android:inputType="number"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
+        android:id="@+id/edtData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Data (ex: 12/11/2025)"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
+        android:id="@+id/edtHorario"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Horário (ex: 14:00)"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>
