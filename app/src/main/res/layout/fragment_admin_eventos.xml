@@ -18,16 +18,30 @@
         android:padding="8dp"
         android:background="@drawable/bg_edittext_rounded"/>
 
-    <!-- BOTÃO DE FILTRO -->
-    <ImageButton
-        android:id="@+id/btnFiltrarEvento"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="end"
-        android:layout_marginTop="8dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/ic_menu_sort_by_size"
-        android:contentDescription="Filtrar eventos"/>
+    <!-- LINHA COM FILTRO + ADICIONAR -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="8dp">
+
+        <ImageButton
+            android:id="@+id/btnFiltrarEvento"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:contentDescription="Filtrar eventos"/>
+
+        <ImageButton
+            android:id="@+id/btnAdicionarEvento"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Adicionar evento"
+            android:src="@android:drawable/ic_input_add" />
+    </LinearLayout>
 
     <!-- LISTA DE EVENTOS -->
     <androidx.recyclerview.widget.RecyclerView
