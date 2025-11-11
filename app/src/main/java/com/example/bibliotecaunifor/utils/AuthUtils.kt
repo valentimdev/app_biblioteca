@@ -1,23 +1,38 @@
 package com.example.bibliotecaunifor.utils
 
 import android.content.Context
+import android.preference.PreferenceManager
+import androidx.core.content.edit
 
 object AuthUtils {
-    private const val PREF_NAME = "auth_prefs"
-    private const val KEY_TOKEN = "jwt_token"
+    private const val TOKEN_KEY = "jwt_token"
+    private const val ROLE_KEY = "user_role"
 
     fun saveToken(context: Context, token: String) {
-        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_TOKEN, token).apply()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        prefs.edit().putString(TOKEN_KEY, token).apply()
     }
 
     fun getToken(context: Context): String? {
-        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_TOKEN, null)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        return prefs.getString(TOKEN_KEY, null)
     }
 
-    fun clearToken(context: Context) {
-        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        prefs.edit().remove(KEY_TOKEN).apply()
+    fun saveRole(context: Context, role: String) {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        prefs.edit().putString(ROLE_KEY, role).apply()
+    }
+
+    fun getRole(context: Context): String? {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        return prefs.getString(ROLE_KEY, null)
+    }
+
+    fun clear(context: Context) {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        prefs.edit {
+            remove(TOKEN_KEY)
+            remove(ROLE_KEY)
+        }
     }
 }

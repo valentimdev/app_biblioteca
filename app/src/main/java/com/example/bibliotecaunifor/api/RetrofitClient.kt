@@ -1,5 +1,6 @@
 package com.example.bibliotecaunifor.api
 
+import com.example.bibliotecaunifor.services.EventService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -13,5 +14,9 @@ object RetrofitClient {
 
     val authApi: AuthApi by lazy {
         retrofit.create(AuthApi::class.java)
+    }
+
+    val eventApi: EventService by lazy {
+        retrofit.create(EventService::class.java)
     }
 }

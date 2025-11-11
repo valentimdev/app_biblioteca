@@ -55,13 +55,6 @@ class AdminActivity : AppCompatActivity() {
                     toolbar.title = "Catálogo (Admin)"
                     // mostra o botão de adicionar no catálogo
                     toolbar.menu.clear()
-                    toolbar.inflateMenu(R.menu.menu_add)
-                    toolbar.setOnMenuItemClickListener { item ->
-                        if (item.itemId == R.id.action_add) {
-                            onAddClick?.invoke()
-                            true
-                        } else false
-                    }
                     replace(CatalogAdminFragment())
                 }
                 R.id.nav_admin_events -> {

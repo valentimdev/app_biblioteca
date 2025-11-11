@@ -72,13 +72,21 @@ class LoginActivity : AppCompatActivity() {
             }
 
             CoroutineScope(Dispatchers.IO).launch {
-                val token = NetworkHelper.login(email, senha)
+                val (token, role) = NetworkHelper.login(email, senha)
 
                 withContext(Dispatchers.Main) {
-                    if (token != null) {
+                    if (token != null && role != null) {
                         AuthUtils.saveToken(this@LoginActivity, token)
+
                         Toast.makeText(this@LoginActivity, "Login bem-sucedido!", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+
+                        val nextIntent = if (role.equals("ADMIN", ignoreCase = true)) {
+                            Intent(this@LoginActivity, AdminActivity::class.java)
+                        } else {
+                            Intent(this@LoginActivity, MainActivity::class.java)
+                        }
+
+                        startActivity(nextIntent)
                         finish()
                     } else {
                         Toast.makeText(this@LoginActivity, "Credenciais inválidas", Toast.LENGTH_SHORT).show()
