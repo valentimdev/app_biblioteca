@@ -9,7 +9,8 @@ import com.example.bibliotecaunifor.databinding.ItemAdminEventoBinding
 
 class AdminEventosAdapter(
     private var eventos: List<AdminEvento>,
-    private val onSwitchChange: (String, AdminEvento) -> Unit
+    private val onSwitchChange: (String, AdminEvento) -> Unit,
+    private val onItemClick: (AdminEvento) -> Unit
 ) : RecyclerView.Adapter<AdminEventosAdapter.ViewHolder>() {
 
     inner class ViewHolder(val binding: ItemAdminEventoBinding) :
@@ -33,12 +34,10 @@ class AdminEventosAdapter(
             tvDataEvento.text = "Data: ${evento.data}"
             tvHorarioEvento.text = "Horário: ${evento.horario}"
 
-            // remove listeners antigos pra não disparar ao reciclar
             switchAtivo.setOnCheckedChangeListener(null)
             switchInscricao.setOnCheckedChangeListener(null)
 
             switchAtivo.isChecked = evento.ativo
-            switchInscricao.isChecked = evento.inscricaoAtiva
 
             switchAtivo.setOnCheckedChangeListener { _: CompoundButton, _: Boolean ->
                 onSwitchChange("Ativar/Desativar Evento", evento)
@@ -47,12 +46,15 @@ class AdminEventosAdapter(
             switchInscricao.setOnCheckedChangeListener { _: CompoundButton, _: Boolean ->
                 onSwitchChange("Permitir Inscrição", evento)
             }
+
+            root.setOnClickListener {
+                onItemClick(evento)
+            }
         }
     }
 
     override fun getItemCount() = eventos.size
 
-    // 👇 chama isso no fragment sempre que mudar a lista
     fun updateData(newList: List<AdminEvento>) {
         eventos = newList
         notifyDataSetChanged()

@@ -12,6 +12,13 @@
         android:hint="Título do evento" />
 
     <EditText
+        android:id="@+id/edtDescricao"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Descrição do evento"
+        android:layout_marginTop="8dp"/>
+
+    <EditText
         android:id="@+id/edtLocal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -27,16 +34,71 @@
         android:layout_marginTop="8dp"/>
 
     <EditText
-        android:id="@+id/edtData"
+        android:id="@+id/edtDataInicio"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Data (ex: 12/11/2025)"
-        android:layout_marginTop="8dp"/>
+        android:hint="Data de início (AAAA-MM-DD)"
+        android:layout_marginTop="8dp"
+        android:inputType="date" />
 
     <EditText
-        android:id="@+id/edtHorario"
+        android:id="@+id/edtHorarioInicio"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Horário (ex: 14:00)"
+        android:hint="Hora de início (HH:mm)"
+        android:layout_marginTop="8dp"
+        android:inputType="time" />
+
+    <EditText
+        android:id="@+id/edtDataFim"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Data de fim (AAAA-MM-DD)"
+        android:layout_marginTop="8dp"
+        android:inputType="date" />
+
+    <EditText
+        android:id="@+id/edtHorarioFim"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Hora de fim (HH:mm)"
+        android:layout_marginTop="8dp"
+        android:inputType="time" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:layout_marginTop="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Evento desativado"
+            android:textSize="16sp"
+            android:layout_gravity="center_vertical"/>
+
+        <Switch
+            android:id="@+id/switchDisabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnEscolherImagem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Escolher imagem"
         android:layout_marginTop="8dp"/>
+
+    <ImageView
+        android:id="@+id/imgPreview"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_marginTop="8dp"
+        android:scaleType="centerCrop"
+        />
+
 </LinearLayout>

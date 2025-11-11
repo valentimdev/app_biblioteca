@@ -39,10 +39,7 @@ class CatalogUserFragment : Fragment() {
         rvBooks = view.findViewById(R.id.rvBooks)
         edtSearch = view.findViewById(R.id.edtSearch)
         val btnFilter = view.findViewById<View>(R.id.btnFilter)
-        val btnAdd = view.findViewById<View>(R.id.btnAdd)
 
-        // user não adiciona livro
-        btnAdd.visibility = View.GONE
 
         rvBooks.layoutManager = LinearLayoutManager(requireContext())
 

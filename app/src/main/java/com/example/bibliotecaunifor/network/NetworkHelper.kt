@@ -34,16 +34,18 @@ object NetworkHelper {
         return JSONObject(response)
     }
 
-    fun login(matricula: String, password: String): String? {
+    fun login(matricula: String, password: String): Pair<String?, String?> {
         val jsonBody = JSONObject()
             .put("matricula", matricula)
             .put("password", password)
 
         return try {
             val response = postJson("auth/signin", jsonBody)
-            response.optString("access_token", null)
+            val token = response.optString("access_token", null)
+            val role = response.optString("role", null)
+            Pair(token, role)
         } catch (e: Exception) {
-            null
+            Pair(null, null)
         }
     }
 

@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.bibliotecaunifor.databinding.ActivityConfiguracoesBinding
+import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.button.MaterialButton
 
 class ConfiguracoesActivity : AppCompatActivity() {
@@ -87,7 +88,7 @@ class ConfiguracoesActivity : AppCompatActivity() {
     }
 
     private fun logoutAndGoToLogin() {
-
+        AuthUtils.clear(this)
         val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
