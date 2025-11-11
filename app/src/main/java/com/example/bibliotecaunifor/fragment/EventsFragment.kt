@@ -1,9 +1,7 @@
 package com.example.bibliotecaunifor.fragment
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -14,6 +12,7 @@ import com.example.bibliotecaunifor.Evento
 import com.example.bibliotecaunifor.MainActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.EventosAdapter
+import com.example.bibliotecaunifor.api.EventApi
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
 import java.text.SimpleDateFormat
@@ -23,7 +22,7 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
 
     private lateinit var recyclerViewEventos: androidx.recyclerview.widget.RecyclerView
     private lateinit var calendarView: com.applandeo.materialcalendarview.CalendarView
-    private lateinit var todosEventos: List<Evento>
+    private var todosEventos: List<Evento> = listOf()
     private var diaSelecionado: Calendar? = null
 
     override fun onResume() {
@@ -36,16 +35,14 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         calendarView = view.findViewById(R.id.calendarView)
         recyclerViewEventos.layoutManager = LinearLayoutManager(requireContext())
 
-        todosEventos = listOf(
-            Evento("Palestra de Literatura", Calendar.getInstance().apply { set(2025, 9, 12, 14, 0) },
-                "Uma palestra sobre obras clássicas e modernas da literatura."),
-            Evento("Clube de Leitura", Calendar.getInstance().apply { set(2025, 9, 18, 18, 0) },
-                "Encontro semanal para discutir livros escolhidos pelo grupo."),
-            Evento("Oficina de Escrita", Calendar.getInstance().apply { set(2025, 9, 18, 10, 0) },
-                "Aprenda técnicas de escrita criativa e desenvolvimento de personagens.")
-        )
-
-        atualizarEventosNoCalendario()
+        Thread {
+            val eventos = EventApi.fetchEventos()
+            requireActivity().runOnUiThread {
+                todosEventos = eventos
+                atualizarEventosNoCalendario()
+                mostrarEventos(todosEventos)
+            }
+        }.start()
 
         calendarView.setOnDayClickListener(object : OnDayClickListener {
             override fun onDayClick(eventDay: EventDay) {
@@ -61,8 +58,6 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
                 }
             }
         })
-
-        mostrarEventos(todosEventos)
     }
 
     private fun atualizarEventosNoCalendario() {
