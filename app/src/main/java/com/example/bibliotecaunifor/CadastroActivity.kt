@@ -4,75 +4,87 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import com.example.bibliotecaunifor.api.RetrofitClient
+import com.example.bibliotecaunifor.models.SignupRequest
+import com.example.bibliotecaunifor.models.SignupResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class CadastroActivity : AppCompatActivity() {
+
+    private lateinit var nomeEditText: EditText
+    private lateinit var emailEditText: EditText
+    private lateinit var matriculaEditText: EditText
+    private lateinit var senhaEditText: EditText
+    private lateinit var confirmarSenhaEditText: EditText
+    private lateinit var cadastrarButton: Button
+    private lateinit var loginLinkTextView: TextView
+    private lateinit var voltarButton2: ImageButton
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cadastro)
 
-        // Aplicar padding automático (mantém o estilo do seu projeto)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_chat)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        nomeEditText = findViewById(R.id.nomeEditText)
+        emailEditText = findViewById(R.id.emailEditText)
+        matriculaEditText = findViewById(R.id.matriculaEditText)
+        senhaEditText = findViewById(R.id.senhaEditText)
+        confirmarSenhaEditText = findViewById(R.id.confirmarSenhaEditText)
+        cadastrarButton = findViewById(R.id.cadastrarButton)
+        loginLinkTextView = findViewById(R.id.loginLinkTextView)
+        voltarButton2 = findViewById(R.id.voltarButton2)
 
-        // Referências dos elementos
-        val voltarButton = findViewById<ImageButton>(R.id.voltarButton2)
-        val nomeEditText = findViewById<EditText>(R.id.nomeEditText)
-        val emailEditText = findViewById<EditText>(R.id.emailEditText)
-        val matriculaEditText = findViewById<EditText>(R.id.matriculaEditText)
-        val senhaEditText = findViewById<EditText>(R.id.senhaEditText)
-        val confirmarSenhaEditText = findViewById<EditText>(R.id.confirmarSenhaEditText)
-        val cadastrarButton = findViewById<Button>(R.id.cadastrarButton)
-        val loginLinkTextView = findViewById<TextView>(R.id.loginLinkTextView)
+        voltarButton2.setOnClickListener { finish() }
 
-        // Botão de voltar
-        voltarButton.setOnClickListener {
-            finish()
-        }
-
-        // Link para login
         loginLinkTextView.setOnClickListener {
-            finish()
+            startActivity(Intent(this, LoginActivity::class.java))
         }
 
-        // Lógica de cadastro
         cadastrarButton.setOnClickListener {
             val nome = nomeEditText.text.toString().trim()
             val email = emailEditText.text.toString().trim()
             val matricula = matriculaEditText.text.toString().trim()
-            val senha = senhaEditText.text.toString().trim()
-            val confirmarSenha = confirmarSenhaEditText.text.toString().trim()
+            val senha = senhaEditText.text.toString()
+            val confirmarSenha = confirmarSenhaEditText.text.toString()
 
-            when {
-                nome.isEmpty() || email.isEmpty() || matricula.isEmpty() ||
-                        senha.isEmpty() || confirmarSenha.isEmpty() -> {
-                    Toast.makeText(this, "Preencha todos os campos.", Toast.LENGTH_SHORT).show()
-                }
+            if (nome.isEmpty() || email.isEmpty() || senha.isEmpty() || confirmarSenha.isEmpty()) {
+                Toast.makeText(this, "Preencha todos os campos obrigatórios", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-                senha.length < 6 -> {
-                    Toast.makeText(
-                        this,
-                        "A senha deve conter pelo menos 6 caracteres.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+            if (senha != confirmarSenha) {
+                Toast.makeText(this, "As senhas não coincidem", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-                senha != confirmarSenha -> {
-                    Toast.makeText(this, "As senhas não coincidem.", Toast.LENGTH_SHORT).show()
-                }
+            cadastrarUsuario(nome, email, matricula, senha)
+        }
+    }
 
-                else -> {
-                    Toast.makeText(this, "Conta criada com sucesso!", Toast.LENGTH_SHORT).show()
-                    // Ir para a tela principal (HomeFragment é carregado dentro da MainActivity)
-                    val intent = Intent(this, MainActivity::class.java)
-                    startActivity(intent)
+    private fun cadastrarUsuario(nome: String, email: String, matricula: String, senha: String) {
+        val request = SignupRequest(
+            matricula = matricula,
+            email = email,
+            password = senha,
+            nome = nome
+        )
+
+        RetrofitClient.authApi.signup(request).enqueue(object : Callback<SignupResponse> {
+            override fun onResponse(call: Call<SignupResponse>, response: Response<SignupResponse>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(this@CadastroActivity, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this@CadastroActivity, LoginActivity::class.java))
                     finish()
+                } else {
+                    val error = response.errorBody()?.string() ?: "Erro desconhecido"
+                    Toast.makeText(this@CadastroActivity, "Erro no cadastro: $error", Toast.LENGTH_LONG).show()
                 }
             }
-        }
+
+            override fun onFailure(call: Call<SignupResponse>, t: Throwable) {
+                Toast.makeText(this@CadastroActivity, "Falha na conexão: ${t.message}", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 }

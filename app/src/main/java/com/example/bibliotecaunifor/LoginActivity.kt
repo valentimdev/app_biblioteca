@@ -2,13 +2,16 @@ package com.example.bibliotecaunifor
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.example.bibliotecaunifor.network.NetworkHelper
+import com.example.bibliotecaunifor.utils.AuthUtils
 import com.example.bibliotecaunifor.admin.AdminActivity
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class LoginActivity : AppCompatActivity() {
 
@@ -24,6 +27,13 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        // Se já tiver token salvo, pula direto
+        AuthUtils.getToken(this)?.let {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+            return
+        }
+
         initViews()
         setupToolbar()
         setupClickListeners()
@@ -33,7 +43,7 @@ class LoginActivity : AppCompatActivity() {
         matriculaEditText = findViewById(R.id.matriculaEditText)
         senhaEditText = findViewById(R.id.senhaEditText)
         loginButton = findViewById(R.id.loginButton)
-        adminButton = findViewById(R.id.btnAdmin)   // 👈 novo
+        adminButton = findViewById(R.id.btnAdmin)
         cadastroLinkTextView = findViewById(R.id.cadastroLinkTextView)
         cadastrarTextView = findViewById(R.id.cadastrar)
         toolbar = findViewById(R.id.toolbar)
@@ -52,75 +62,41 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        // login normal
         loginButton.setOnClickListener {
-            performLogin()
+            val email = matriculaEditText.text.toString().trim()
+            val senha = senhaEditText.text.toString().trim()
+
+            if (email.isEmpty() || senha.isEmpty()) {
+                Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val token = NetworkHelper.login(email, senha)
+
+                withContext(Dispatchers.Main) {
+                    if (token != null) {
+                        AuthUtils.saveToken(this@LoginActivity, token)
+                        Toast.makeText(this@LoginActivity, "Login bem-sucedido!", Toast.LENGTH_SHORT).show()
+                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                        finish()
+                    } else {
+                        Toast.makeText(this@LoginActivity, "Credenciais inválidas", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
 
-        // atalho para admin (sem validar nada, por enquanto)
         adminButton.setOnClickListener {
-            val intent = Intent(this, AdminActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, AdminActivity::class.java))
         }
 
         cadastroLinkTextView.setOnClickListener {
-            val intent = Intent(this, EsqueceuSenhaActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, EsqueceuSenhaActivity::class.java))
         }
 
         cadastrarTextView.setOnClickListener {
-            val intent = Intent(this, CadastroActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, CadastroActivity::class.java))
         }
-    }
-
-    private fun performLogin() {
-        val matricula = matriculaEditText.text.toString().trim()
-        val senha = senhaEditText.text.toString().trim()
-
-        if (validateInput(matricula, senha)) {
-            // Simulação de login - sem backend
-            if (matricula == getString(R.string.login_admin_credentials) &&
-                senha == getString(R.string.login_admin_credentials)
-            ) {
-                // Login como administrador
-                val intent = Intent(this, AdminActivity::class.java)
-                startActivity(intent)
-                finish()
-            } else if (matricula.isNotEmpty() && senha.isNotEmpty()) {
-                // Login como usuário comum
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            } else {
-                Toast.makeText(
-                    this,
-                    getString(R.string.login_error_invalid_credentials),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-    }
-
-    private fun validateInput(matricula: String, senha: String): Boolean {
-        if (matricula.isEmpty()) {
-            matriculaEditText.error = getString(R.string.login_error_matricula_required)
-            matriculaEditText.requestFocus()
-            return false
-        }
-
-        if (senha.isEmpty()) {
-            senhaEditText.error = getString(R.string.login_error_senha_required)
-            senhaEditText.requestFocus()
-            return false
-        }
-
-        if (senha.length < 6) {
-            senhaEditText.error = getString(R.string.login_error_senha_length)
-            senhaEditText.requestFocus()
-            return false
-        }
-
-        return true
     }
 }
