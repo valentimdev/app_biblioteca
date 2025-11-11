@@ -68,16 +68,4 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_notificacao" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:background="?android:attr/windowBackground"
-        app:itemIconTint="@color/unifor_traditional_blue"
-        app:itemTextColor="@color/unifor_traditional_blue"
-        app:labelVisibilityMode="labeled"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:menu="@menu/bottom_nav_admin" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
