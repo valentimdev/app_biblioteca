@@ -1,37 +1,46 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/item_loan.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingVertical="4dp">
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/bg_loan_item">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvDue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp" />
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
 
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/btnRenew"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Título do livro"
-            android:textStyle="bold" />
+            android:layout_weight="1"
+            android:text="Renovar"
+            style="?attr/materialButtonOutlinedStyle" />
 
-        <TextView
-            android:id="@+id/tvDue"
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/btnReturn"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Devolução: 11/11/2025"
-            android:textSize="12sp" />
+            android:layout_weight="1"
+            android:text="Devolver"
+            android:layout_marginStart="8dp" />
+
     </LinearLayout>
-
-    <Button
-        android:id="@+id/btnRenew"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Renovar"
-        android:textAllCaps="false"
-        android:layout_marginStart="8dp" />
 </LinearLayout>

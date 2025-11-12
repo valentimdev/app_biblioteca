@@ -10,11 +10,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.adapters.BookAdapter
-import com.example.bibliotecaunifor.BookDetailFragment
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.api.RetrofitClient
 import com.example.bibliotecaunifor.models.CreateBookDto
 import com.example.bibliotecaunifor.models.EditBookDto
+import com.example.bibliotecaunifor.ui.book.BookDetailFragment
 import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import retrofit2.Call
