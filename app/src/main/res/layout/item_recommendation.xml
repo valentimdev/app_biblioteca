@@ -1,0 +1,14 @@
+<!-- res/layout/item_recommendation.xml -->
+<TextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tvTitle"
+    android:layout_width="140dp"
+    android:layout_height="wrap_content"
+    android:padding="16dp"
+    android:text="Título do Livro"
+    android:textColor="@android:color/white"
+    android:background="@color/purple_700"
+    android:textSize="14sp"
+    android:gravity="center"
+    android:textStyle="bold"
+    android:layout_marginEnd="8dp" />
