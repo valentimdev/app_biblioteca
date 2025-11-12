@@ -1,10 +1,12 @@
 package com.example.bibliotecaunifor.admin
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import br.unifor.biblioteca.admin.GestaoFragment
+import com.example.bibliotecaunifor.ConfiguracoesActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.fragment.AdminEventsFragment
 import com.google.android.material.appbar.MaterialToolbar
@@ -61,6 +63,9 @@ class AdminActivity : AppCompatActivity() {
                     toolbar.menu.clear()
                     toolbar.title = "Eventos"
                     replace(AdminEventsFragment())
+                }
+                R.id.nav_admin_settings -> {
+                    startActivity(Intent(this, ConfiguracoesActivity::class.java))
                 }
             }
             true

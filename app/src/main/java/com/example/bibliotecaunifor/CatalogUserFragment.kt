@@ -1,49 +1,33 @@
 package com.example.bibliotecaunifor
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.bibliotecaunifor.Book
-import com.example.bibliotecaunifor.BookDetailFragment
-import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.BookAdapter
+import com.example.bibliotecaunifor.api.RetrofitClient
+import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
-class CatalogUserFragment : Fragment() {
+class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
 
     private lateinit var rvBooks: RecyclerView
     private lateinit var edtSearch: EditText
     private lateinit var adapter: BookAdapter
+    private val allBooks = mutableListOf<Book>()
     private var showOnlyAvailable = false
-
-    // mock
-    private val allBooks = mutableListOf(
-        Book("1", "Clean Code", "Robert C. Martin"),
-        Book("2", "Kotlin in Action", "D. Jemerov, S. Isakova"),
-        Book("3", "Effective Java", "Joshua Bloch", oculto = true),          // não deve aparecer
-        Book("4", "Design Patterns", "GoF", emprestimoHabilitado = false),   // não deve aparecer
-    )
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View? = inflater.inflate(R.layout.fragment_catalog, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         rvBooks = view.findViewById(R.id.rvBooks)
         edtSearch = view.findViewById(R.id.edtSearch)
         val btnFilter = view.findViewById<View>(R.id.btnFilter)
 
-
         rvBooks.layoutManager = LinearLayoutManager(requireContext())
-
-        // 👇 AQUI: isAdmin = false -> esconde o lápis
         adapter = BookAdapter(allBooks, false) { action, book ->
             if (action == "detail") {
                 parentFragmentManager.beginTransaction()
@@ -54,17 +38,45 @@ class CatalogUserFragment : Fragment() {
         }
         rvBooks.adapter = adapter
 
-        // botão de filtro
         btnFilter.setOnClickListener { showFilterDialog() }
 
-        // busca
         edtSearch.setOnEditorActionListener { _, _, _ ->
             applyFilterAndSearch()
             true
         }
 
-        // 👇 importantíssimo: aplica o filtro logo que a tela abre
-        applyFilterAndSearch()
+        fetchBooks()
+    }
+
+    private fun fetchBooks() {
+        val tokenStr = AuthUtils.getToken(requireContext())
+        if (tokenStr.isNullOrEmpty()) {
+            android.util.Log.e("CatalogUserFragment", "Token nulo!")
+            return
+        }
+        val token = "Bearer $tokenStr"
+
+        RetrofitClient.bookApi.getBooks(token).enqueue(object : Callback<List<Book>> {
+            override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
+                android.util.Log.d("CatalogUserFragment", "Response code: ${response.code()}")
+                android.util.Log.d("CatalogUserFragment", "Body: ${response.body()}")
+
+                if (response.isSuccessful) {
+                    allBooks.clear()
+                    allBooks.addAll(response.body() ?: emptyList())
+                    applyFilterAndSearch()
+                } else {
+                    android.util.Log.e(
+                        "CatalogUserFragment",
+                        "Erro ao buscar livros: ${response.code()} - ${response.errorBody()?.string()}"
+                    )
+                }
+            }
+
+            override fun onFailure(call: Call<List<Book>>, t: Throwable) {
+                android.util.Log.e("CatalogUserFragment", "Falha na requisição", t)
+            }
+        })
     }
 
     private fun showFilterDialog() {
@@ -79,25 +91,15 @@ class CatalogUserFragment : Fragment() {
     }
 
     private fun applyFilterAndSearch() {
-        val search = edtSearch.text.toString().trim()
-
-        // começa SEMPRE escondendo os ocultos
+        val query = edtSearch.text.toString().trim()
         var list = allBooks.asSequence()
-            .filter { !it.oculto }
 
-        // se selecionou "disponíveis", esconde os com empréstimo desativado
-        if (showOnlyAvailable) {
-            list = list.filter { it.emprestimoHabilitado }
-        }
-
-        // busca por texto
-        if (search.isNotBlank()) {
-            list = list.filter {
-                it.nome.contains(search, ignoreCase = true) ||
-                        it.autor.contains(search, ignoreCase = true)
-            }
+        if (query.isNotBlank()) {
+            list = list.filter { it.title.contains(query, true) || it.author.contains(query, true) }
         }
 
         adapter.updateData(list.toList())
     }
+
+
 }

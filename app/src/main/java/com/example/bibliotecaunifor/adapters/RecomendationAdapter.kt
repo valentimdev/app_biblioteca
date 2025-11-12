@@ -34,7 +34,7 @@ class RecommendationAdapter(
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val b = items[position]
-        holder.title.text = b.nome
+        holder.title.text = b.title
         holder.img.setImageResource(R.drawable.ic_launcher_foreground)
     }
 

@@ -5,9 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AlertDialog
 
 class BookDetailFragment : Fragment() {
 
@@ -19,10 +19,11 @@ class BookDetailFragment : Fragment() {
             val frag = BookDetailFragment()
             val args = Bundle().apply {
                 putString("id", book.id)
-                putString("nome", book.nome)
-                putString("autor", book.autor)
-                putBoolean("oculto", book.oculto)
-                putBoolean("emprestimoHabilitado", book.emprestimoHabilitado)
+                putString("title", book.title)
+                putString("author", book.author)
+                putString("isbn", book.isbn ?: "")
+                putString("description", book.description ?: "")
+                putInt("totalCopies", book.totalCopies ?: 0)
                 putBoolean("isAdmin", isAdmin)
             }
             frag.arguments = args
@@ -35,10 +36,15 @@ class BookDetailFragment : Fragment() {
         arguments?.let {
             book = Book(
                 id = it.getString("id") ?: "",
-                nome = it.getString("nome") ?: "",
-                autor = it.getString("autor") ?: "",
-                oculto = it.getBoolean("oculto"),
-                emprestimoHabilitado = it.getBoolean("emprestimoHabilitado")
+                title = it.getString("title") ?: "",
+                author = it.getString("author") ?: "",
+                isbn = it.getString("isbn") ?: "",
+                description = it.getString("description"),
+                totalCopies = it.getInt("totalCopies"),
+                createdAt = it.getString("createdAt") ?: "",
+                updatedAt = it.getString("updatedAt") ?: "",
+                availableCopies = it.getInt("availableCopies"),
+                adminId = it.getString("adminId") ?: ""
             )
             isAdmin = it.getBoolean("isAdmin", false)
         }
@@ -48,47 +54,44 @@ class BookDetailFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View? {
-        return inflater.inflate(R.layout.fragment_book_detail, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_book_detail, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val imgCover = view.findViewById<ImageView>(R.id.imgCover)
         val txtTitle = view.findViewById<TextView>(R.id.txtTitle)
         val txtAuthor = view.findViewById<TextView>(R.id.txtAuthor)
-        val txtId = view.findViewById<TextView>(R.id.txtId)
+        val txtIsbn = view.findViewById<TextView>(R.id.txtIsbn)
+        val txtDescription = view.findViewById<TextView>(R.id.txtDescription)
+        val txtTotalCopies = view.findViewById<TextView>(R.id.txtTotalCopies)
         val btnAction = view.findViewById<Button>(R.id.btnAction)
 
-        txtTitle.text = book.nome
-        txtAuthor.text = "Autor: ${book.autor}"
-        txtId.text = "ID: ${book.id}"
+        txtTitle.text = book.title
+        txtAuthor.text = "Autor: ${book.author}"
+        txtIsbn.text = "ISBN: ${book.isbn ?: "-"}"
+        txtDescription.text = "Descrição: ${book.description ?: "-"}"
+        txtTotalCopies.text = "Cópias: ${book.totalCopies ?: 0}"
 
         if (isAdmin) {
             btnAction.text = "Gerenciar estoque"
             btnAction.setOnClickListener { showAdminInfo() }
         } else {
-            // usuário
-            btnAction.text = if (book.emprestimoHabilitado) "Alugar livro" else "Indisponível"
-            btnAction.isEnabled = book.emprestimoHabilitado
             btnAction.setOnClickListener { showUserRentInfo() }
         }
     }
 
     private fun showAdminInfo() {
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(requireContext())
             .setTitle("Estoque do livro")
-            .setMessage("Quantidade disponível: 12\nEmpréstimos ativos: 4")
             .setPositiveButton("Fechar", null)
             .show()
     }
 
     private fun showUserRentInfo() {
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(requireContext())
             .setTitle("Solicitação de empréstimo")
-            .setMessage("Você deseja alugar o livro \"${book.nome}\"?")
+            .setMessage("Você deseja alugar o livro \"${book.title}\"?")
             .setPositiveButton("Sim") { d, _ ->
                 d.dismiss()
-                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                AlertDialog.Builder(requireContext())
                     .setTitle("Empréstimo confirmado")
                     .setMessage("Seu pedido foi registrado. Retire o livro na biblioteca.")
                     .setPositiveButton("OK", null)

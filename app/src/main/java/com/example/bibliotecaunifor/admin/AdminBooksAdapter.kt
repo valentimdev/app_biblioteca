@@ -35,8 +35,8 @@ class AdminBooksAdapter(
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val book = books[position]
-        holder.tvTitle.text = book.nome
-        holder.tvAuthor.text = book.autor
+        holder.tvTitle.text = book.title
+        holder.tvAuthor.text = book.author
 
         val visivel = visibilidadeState[book.id] ?: true
         val emprestimoOn = emprestimoState[book.id] ?: true

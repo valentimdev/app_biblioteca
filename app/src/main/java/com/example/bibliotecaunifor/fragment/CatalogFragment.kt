@@ -16,21 +16,20 @@ import com.example.bibliotecaunifor.BookDetailFragment
 import com.example.bibliotecaunifor.MainActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.BookAdapter
-import com.example.bibliotecaunifor.admin.AdminActivity
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
+import com.example.bibliotecaunifor.api.RetrofitClient
+import com.example.bibliotecaunifor.models.CreateBookDto
+import com.example.bibliotecaunifor.models.EditBookDto
+import com.example.bibliotecaunifor.utils.AuthUtils
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class CatalogFragment : Fragment(R.layout.fragment_catalog) {
 
-    private val sample = mutableListOf(
-        Book("1", "Clean Code", "Robert C. Martin"),
-        Book("2", "Kotlin in Action", "D. Jemerov, S. Isakova"),
-        Book("3", "Effective Java", "Joshua Bloch", oculto = true),
-        Book("4", "Design Patterns", "GoF", emprestimoHabilitado = false)
-    )
-
+    private val allBooks = mutableListOf<Book>()
     private lateinit var adapter: BookAdapter
-    private var isAdmin = true // <- depois você pode setar isso conforme login
+    private var isAdmin = false // ou setar conforme login
 
     override fun onResume() {
         super.onResume()
@@ -40,115 +39,118 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val rv = view.findViewById<RecyclerView>(R.id.rvBooks)
         rv.layoutManager = LinearLayoutManager(requireContext())
-        adapter = BookAdapter(sample, isAdmin) { action, book ->
+        adapter = BookAdapter(allBooks, isAdmin) { action, book ->
             when (action) {
                 "detail" -> parentFragmentManager.beginTransaction()
                     .replace(R.id.fragment_container, BookDetailFragment.newInstance(book, isAdmin))
                     .addToBackStack(null)
                     .commit()
-
-                "edit" -> abrirDialogLivro(book)
-                "remove" -> removerLivro(book)
-
-                "toggleEmprestimo" -> {
-                    book.emprestimoHabilitado = !book.emprestimoHabilitado
-                    adapter.notifyDataSetChanged()
-                }
-
-                "toggleVisibilidade" -> {
-                    book.oculto = !book.oculto
-                    adapter.notifyDataSetChanged()
-                }
+                "edit" -> if (isAdmin) showAddDialog(book)
+                "remove" -> if (isAdmin) removeBook(book)
             }
         }
-
         rv.adapter = adapter
 
-        // botão de filtro (abre o mesmo dialog multiopção que no admin eventos)
-        view.findViewById<ImageButton>(R.id.btnFilter).setOnClickListener { abrirDialogFiltros() }
-
-        // busca
-        val edt = view.findViewById<EditText>(R.id.edtSearch)
-        edt.doAfterTextChanged { text ->
-            val filtered = sample.filter {
-                it.nome.contains(text.toString(), ignoreCase = true)
-                        || it.autor.contains(text.toString(), ignoreCase = true)
+        val edtSearch = view.findViewById<EditText>(R.id.edtSearch)
+        edtSearch.doAfterTextChanged { text ->
+            val filtered = allBooks.filter {
+                it.title.contains(text.toString(), ignoreCase = true) ||
+                        it.author.contains(text.toString(), ignoreCase = true)
             }
             adapter.updateData(filtered)
         }
 
-        // botão de adicionar no header (configurado pela MainActivity)
-
+        fetchBooks()
     }
 
-    private fun abrirDialogFiltros() {
-        val items = arrayOf("Apenas visíveis", "Somente ocultos", "Com empréstimo ativo", "Com empréstimo desativado")
-        val checked = booleanArrayOf(false, false, false, false)
+    private fun fetchBooks() {
+        val tokenStr = AuthUtils.getToken(requireContext())
+        if (tokenStr.isNullOrEmpty()) {
+            android.util.Log.e("CatalogFragment", "Token nulo!")
+            return
+        }
+        val token = "Bearer $tokenStr"
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Filtrar livros")
-            .setMultiChoiceItems(items, checked) { _, which, isChecked ->
-                checked[which] = isChecked
+        RetrofitClient.bookApi.getBooks(token).enqueue(object : Callback<List<Book>> {
+            override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
+                android.util.Log.d("CatalogFragment", "Response code: ${response.code()}")
+                android.util.Log.d("CatalogFragment", "Body: ${response.body()}")
+
+                if (response.isSuccessful) {
+                    allBooks.clear()
+                    allBooks.addAll(response.body() ?: emptyList())
+                    adapter.updateData(allBooks)
+                } else {
+                    android.util.Log.e(
+                        "CatalogFragment",
+                        "Erro ao buscar livros: ${response.code()} - ${response.errorBody()?.string()}"
+                    )
+                }
             }
-            .setPositiveButton("Aplicar") { _, _ ->
-                var filtrados = sample.toList()
-                if (checked[0]) filtrados = filtrados.filter { !it.oculto }
-                if (checked[1]) filtrados = filtrados.filter { it.oculto }
-                if (checked[2]) filtrados = filtrados.filter { it.emprestimoHabilitado }
-                if (checked[3]) filtrados = filtrados.filter { !it.emprestimoHabilitado }
-                adapter.updateData(filtrados)
+
+            override fun onFailure(call: Call<List<Book>>, t: Throwable) {
+                android.util.Log.e("CatalogFragment", "Falha na requisição", t)
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        })
     }
 
-    private fun abrirDialogLivro(book: Book? = null) {
-        val inflater = LayoutInflater.from(requireContext())
-        val view = inflater.inflate(R.layout.dialog_add_book, null)
-
-        val inputNome = view.findViewById<TextInputEditText>(R.id.edtNome)
-        val inputAutor = view.findViewById<TextInputEditText>(R.id.edtAutor)
+    private fun showAddDialog(book: Book? = null) {
+        val layout = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_book, null)
+        val edtTitulo = layout.findViewById<EditText>(R.id.edtTitulo)
+        val edtAutor = layout.findViewById<EditText>(R.id.edtAutor)
+        val edtIsbn = layout.findViewById<EditText>(R.id.edtIsbn)
+        val edtDescricao = layout.findViewById<EditText>(R.id.edtDescricao)
+        val edtTotalCopies = layout.findViewById<EditText>(R.id.edtTotalCopies)
 
         if (book != null) {
-            inputNome.setText(book.nome)
-            inputAutor.setText(book.autor)
+            edtTitulo.setText(book.title)
+            edtAutor.setText(book.author)
+            edtIsbn.setText(book.isbn ?: "")
+            edtDescricao.setText(book.description ?: "")
+            edtTotalCopies.setText(book.totalCopies.toString())
         }
 
-        AlertDialog.Builder(requireContext())
-            .setTitle(if (book == null) "Adicionar livro" else "Editar livro")
-            .setView(view)
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(if (book == null) "Adicionar Livro" else "Editar Livro")
+            .setView(layout)
             .setPositiveButton("Salvar") { _, _ ->
-                val nome = inputNome.text.toString().trim()
-                val autor = inputAutor.text.toString().trim()
-                if (nome.isEmpty() || autor.isEmpty()) {
-                    Toast.makeText(requireContext(), "Preencha todos os campos", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
+                val token = "Bearer ${AuthUtils.getToken(requireContext())}"
 
                 if (book == null) {
-                    val novo = Book((sample.size + 1).toString(), nome, autor)
-                    sample.add(novo)
+                    val dto = CreateBookDto(
+                        title = edtTitulo.text.toString(),
+                        author = edtAutor.text.toString(),
+                        isbn = edtIsbn.text.toString(),
+                        description = edtDescricao.text.toString(),
+                        totalCopies = edtTotalCopies.text.toString().toIntOrNull() ?: 0
+                    )
+                    RetrofitClient.bookApi.createBook(dto, token).enqueue(object : Callback<Book> {
+                        override fun onResponse(call: Call<Book>, response: Response<Book>) { fetchBooks() }
+                        override fun onFailure(call: Call<Book>, t: Throwable) { t.printStackTrace() }
+                    })
                 } else {
-                    book.nome = nome
-                    book.autor = autor
+                    val dto = EditBookDto(
+                        title = edtTitulo.text.toString(),
+                        author = edtAutor.text.toString(),
+                        isbn = edtIsbn.text.toString(),
+                        description = edtDescricao.text.toString(),
+                        totalCopies = edtTotalCopies.text.toString().toIntOrNull()
+                    )
+                    RetrofitClient.bookApi.updateBook(book.id, dto, token).enqueue(object : Callback<Book> {
+                        override fun onResponse(call: Call<Book>, response: Response<Book>) { fetchBooks() }
+                        override fun onFailure(call: Call<Book>, t: Throwable) { t.printStackTrace() }
+                    })
                 }
-
-                adapter.updateData(sample)
             }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    private fun removerLivro(book: Book) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Remover livro")
-            .setMessage("Deseja remover '${book.nome}'?")
-            .setPositiveButton("Sim") { _, _ ->
-                sample.remove(book)
-                adapter.updateData(sample)
-            }
-            .setNegativeButton("Não", null)
-            .show()
+    private fun removeBook(book: Book) {
+        val token = "Bearer ${AuthUtils.getToken(requireContext())}"
+        RetrofitClient.bookApi.deleteBook(book.id, token).enqueue(object : Callback<Map<String, Boolean>> {
+            override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) { fetchBooks() }
+            override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) { t.printStackTrace() }
+        })
     }
 }
-
