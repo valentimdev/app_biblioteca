@@ -19,4 +19,8 @@ object RetrofitClient {
     val eventApi: EventService by lazy {
         retrofit.create(EventService::class.java)
     }
+
+    val bookApi: BookApi by lazy {
+        retrofit.create(BookApi::class.java)
+    }
 }

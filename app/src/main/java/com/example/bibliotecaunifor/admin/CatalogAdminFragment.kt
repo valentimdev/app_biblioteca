@@ -12,7 +12,14 @@ import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.adapters.BookAdapter
 import com.example.bibliotecaunifor.BookDetailFragment
 import com.example.bibliotecaunifor.R
+import com.example.bibliotecaunifor.api.RetrofitClient
+import com.example.bibliotecaunifor.models.CreateBookDto
+import com.example.bibliotecaunifor.models.EditBookDto
+import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class CatalogAdminFragment : Fragment() {
 
@@ -21,21 +28,14 @@ class CatalogAdminFragment : Fragment() {
     private lateinit var edtSearch: EditText
     private var currentFilter: FilterType = FilterType.TODOS
 
-    // mock de livros
-    private val allBooks = mutableListOf(
-        Book("1", "A Metamorfose", "Franz Kafka"),
-        Book("2", "1984", "George Orwell", oculto = true),
-        Book("3", "A Revolução dos Bichos", "George Orwell", emprestimoHabilitado = false),
-        Book("4", "O Processo", "Franz Kafka"),
-    )
+    private val allBooks = mutableListOf<Book>()
 
-    // tipos de filtro
     enum class FilterType { TODOS, VISIVEIS, OCULTOS, EMPRESTIMO_DESATIVADO }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View? = inflater.inflate(R.layout.fragment_catalog, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -46,20 +46,15 @@ class CatalogAdminFragment : Fragment() {
         val btnFilter = view.findViewById<View>(R.id.btnFilter)
         val btnAdd = view.findViewById<View>(R.id.btnAdd)
 
-        // mostra botão de adicionar no admin
         btnAdd.visibility = View.VISIBLE
         btnAdd.setOnClickListener { showAddDialog() }
-
-        // abre o dialog de filtros
         btnFilter.setOnClickListener { showFilterDialog() }
 
-        // busca por texto
         edtSearch.setOnEditorActionListener { _, _, _ ->
             applyFilterAndSearch()
             true
         }
 
-        // inicializa adapter
         adapter = BookAdapter(allBooks, true) { action, book ->
             when (action) {
                 "detail" -> parentFragmentManager.beginTransaction()
@@ -67,25 +62,40 @@ class CatalogAdminFragment : Fragment() {
                     .addToBackStack(null)
                     .commit()
                 "edit" -> showAddDialog(book)
-                "remove" -> {
-                    allBooks.remove(book)
-                    applyFilterAndSearch()
-                }
-                "toggleEmprestimo" -> {
-                    book.emprestimoHabilitado = !book.emprestimoHabilitado
-                    applyFilterAndSearch()
-                }
-                "toggleVisibilidade" -> {
-                    book.oculto = !book.oculto
-                    applyFilterAndSearch()
-                }
+                "remove" -> removeBook(book)
             }
         }
 
         rvBooks.adapter = adapter
+        fetchBooks()
     }
 
-    // dialog para escolher tipo de filtro
+    private fun fetchBooks() {
+        val token = AuthUtils.getToken(requireContext())
+        if (token.isNullOrEmpty()) {
+            android.util.Log.e("CatalogAdminFragment", "Token nulo!")
+            return
+        }
+
+        RetrofitClient.bookApi.getBooks("Bearer $token").enqueue(object : Callback<List<Book>> {
+            override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
+                android.util.Log.d("CatalogAdminFragment", "Response code: ${response.code()}")
+                android.util.Log.d("CatalogAdminFragment", "Body: ${response.body()}")
+                if (response.isSuccessful) {
+                    allBooks.clear()
+                    allBooks.addAll(response.body() ?: emptyList())
+                    applyFilterAndSearch()
+                } else {
+                    android.util.Log.e("CatalogAdminFragment", "Erro: ${response.errorBody()?.string()}")
+                }
+            }
+
+            override fun onFailure(call: Call<List<Book>>, t: Throwable) {
+                android.util.Log.e("CatalogAdminFragment", "Falha ao buscar livros", t)
+            }
+        })
+    }
+
     private fun showFilterDialog() {
         val options = arrayOf("Todos", "Visíveis", "Ocultos", "Empréstimo desativado")
         MaterialAlertDialogBuilder(requireContext())
@@ -102,53 +112,103 @@ class CatalogAdminFragment : Fragment() {
             .show()
     }
 
-    // aplica busca + filtro e atualiza a lista
     private fun applyFilterAndSearch() {
         val query = edtSearch.text.toString().trim()
         var list = allBooks.asSequence()
 
-        list = when (currentFilter) {
-            FilterType.TODOS -> list
-            FilterType.VISIVEIS -> list.filter { !it.oculto }
-            FilterType.OCULTOS -> list.filter { it.oculto }
-            FilterType.EMPRESTIMO_DESATIVADO -> list.filter { !it.emprestimoHabilitado }
-        }
-
         if (query.isNotBlank()) {
-            list = list.filter {
-                it.nome.contains(query, true) || it.autor.contains(query, true)
-            }
+            list = list.filter { it.title.contains(query, true) || it.author.contains(query, true) }
         }
 
         adapter.updateData(list.toList())
     }
 
-    // mock do dialog de adicionar/editar livro
     private fun showAddDialog(book: Book? = null) {
         val layout = layoutInflater.inflate(R.layout.dialog_add_book, null)
-        val edtNome = layout.findViewById<EditText>(R.id.edtNome)
-        val edtAutor = layout.findViewById<EditText>(R.id.edtAutor)
+        val edtTitulo = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtTitulo)
+        val edtAutor = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtAutor)
+        val edtIsbn = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtIsbn)
+        val edtDescricao = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtDescricao)
+        val edtTotalCopies = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtTotalCopies)
 
         if (book != null) {
-            edtNome.setText(book.nome)
-            edtAutor.setText(book.autor)
+            edtTitulo.setText(book.title)
+            edtAutor.setText(book.author)
+            edtIsbn.setText(book.isbn ?: "")
+            edtDescricao.setText(book.description ?: "")
+            edtTotalCopies.setText(book.totalCopies.toString())
         }
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(if (book == null) "Adicionar Livro" else "Editar Livro")
             .setView(layout)
             .setPositiveButton("Salvar") { _, _ ->
-                val nome = edtNome.text.toString()
-                val autor = edtAutor.text.toString()
-                if (book == null) {
-                    allBooks.add(Book((allBooks.size + 1).toString(), nome, autor))
-                } else {
-                    book.nome = nome
-                    book.autor = autor
+                val tokenStr = AuthUtils.getToken(requireContext())
+                if (tokenStr.isNullOrEmpty()) {
+                    android.util.Log.e("CatalogAdminFragment", "Token nulo!")
+                    return@setPositiveButton
                 }
-                applyFilterAndSearch()
+                val token = "Bearer $tokenStr"
+
+                if (book == null) {
+                    val dto = CreateBookDto(
+                        title = edtTitulo.text.toString(),
+                        author = edtAutor.text.toString(),
+                        isbn = edtIsbn.text.toString(),
+                        description = edtDescricao.text.toString(),
+                        totalCopies = edtTotalCopies.text.toString().toIntOrNull() ?: 0
+                    )
+                    android.util.Log.d("CatalogAdminFragment", "Criando livro: $dto")
+
+                    RetrofitClient.bookApi.createBook(dto, token).enqueue(object : Callback<Book> {
+                        override fun onResponse(call: Call<Book>, response: Response<Book>) {
+                            if (response.isSuccessful) {
+                                android.util.Log.d("CatalogAdminFragment", "Livro criado: ${response.body()}")
+                                fetchBooks()
+                            } else {
+                                android.util.Log.e("CatalogAdminFragment", "Erro ao criar: ${response.code()} - ${response.errorBody()?.string()}")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<Book>, t: Throwable) {
+                            android.util.Log.e("CatalogAdminFragment", "Falha na criação do livro", t)
+                        }
+                    })
+                } else {
+                    val dto = EditBookDto(
+                        title = edtTitulo.text.toString(),
+                        author = edtAutor.text.toString(),
+                        isbn = edtIsbn.text.toString(),
+                        description = edtDescricao.text.toString(),
+                        totalCopies = edtTotalCopies.text.toString().toIntOrNull()
+                    )
+                    android.util.Log.d("CatalogAdminFragment", "Editando livro: $dto")
+
+                    RetrofitClient.bookApi.updateBook(book.id, dto, token).enqueue(object : Callback<Book> {
+                        override fun onResponse(call: Call<Book>, response: Response<Book>) {
+                            if (response.isSuccessful) {
+                                android.util.Log.d("CatalogAdminFragment", "Livro editado: ${response.body()}")
+                                fetchBooks()
+                            } else {
+                                android.util.Log.e("CatalogAdminFragment", "Erro ao editar: ${response.code()} - ${response.errorBody()?.string()}")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<Book>, t: Throwable) {
+                            android.util.Log.e("CatalogAdminFragment", "Falha na edição do livro", t)
+                        }
+                    })
+                }
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    private fun removeBook(book: Book) {
+        val token = "Bearer ${AuthUtils.getToken(requireContext())}"
+        RetrofitClient.bookApi.deleteBook(book.id, token).enqueue(object : Callback<Map<String, Boolean>> {
+            override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) { fetchBooks() }
+            override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) { t.printStackTrace() }
+        })
     }
 }

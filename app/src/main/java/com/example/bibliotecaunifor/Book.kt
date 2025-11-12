@@ -1,9 +1,16 @@
 package com.example.bibliotecaunifor
 
+import com.google.gson.annotations.SerializedName
+
 data class Book(
     val id: String,
-    var nome: String,
-    var autor: String,
-    var oculto: Boolean = false,
-    var emprestimoHabilitado: Boolean = true
+    val createdAt: String,
+    val updatedAt: String,
+    val title: String,
+    val author: String,
+    val isbn: String?,
+    val description: String?,
+    val totalCopies: Int,
+    val availableCopies: Int,
+    val adminId: String
 )

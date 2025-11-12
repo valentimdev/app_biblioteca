@@ -27,20 +27,9 @@ class BookAdapter(
         val b = holder.binding
 
         // dados principais
-        b.tvTitle.text = book.nome
-        b.tvAuthor.text = book.autor
+        b.tvTitle.text = book.title
+        b.tvAuthor.text = book.author
 
-        // status (oculto / empréstimo desativado)
-        val status = mutableListOf<String>()
-        if (book.oculto) status.add("Oculto")
-        if (!book.emprestimoHabilitado) status.add("Empréstimo desativado")
-
-        if (status.isEmpty()) {
-            b.tvStatus.visibility = View.GONE
-        } else {
-            b.tvStatus.visibility = View.VISIBLE
-            b.tvStatus.text = status.joinToString(" • ")
-        }
 
         // mostra ou esconde o botão de opções conforme for admin
         b.btnMore.visibility = if (isAdmin) View.VISIBLE else View.GONE
