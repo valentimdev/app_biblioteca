@@ -27,7 +27,7 @@ class EventoCarrosselAdapter(
 
     override fun onBindViewHolder(holder: EventoViewHolder, position: Int) {
         val evento = eventos[position]
-        holder.tvTitulo.text = evento.titulo
+        holder.tvTitulo.text = evento.title
         holder.itemView.setOnClickListener { onClick(evento) }
     }
 }

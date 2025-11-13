@@ -14,7 +14,6 @@ import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.EventosAdapter
 import com.example.bibliotecaunifor.api.EventApi
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.chip.Chip
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -22,8 +21,15 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
 
     private lateinit var recyclerViewEventos: androidx.recyclerview.widget.RecyclerView
     private lateinit var calendarView: com.applandeo.materialcalendarview.CalendarView
+
     private var todosEventos: List<Evento> = listOf()
     private var diaSelecionado: Calendar? = null
+
+    // O backend envia formato ISO UTC (ex: 2025-11-11T19:00:00.000Z)
+    private val formatoISO = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    private val formatoExibicao = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
     override fun onResume() {
         super.onResume()
@@ -35,14 +41,7 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         calendarView = view.findViewById(R.id.calendarView)
         recyclerViewEventos.layoutManager = LinearLayoutManager(requireContext())
 
-        Thread {
-            val eventos = EventApi.fetchEventos()
-            requireActivity().runOnUiThread {
-                todosEventos = eventos
-                atualizarEventosNoCalendario()
-                mostrarEventos(todosEventos)
-            }
-        }.start()
+        carregarEventos()
 
         calendarView.setOnDayClickListener(object : OnDayClickListener {
             override fun onDayClick(eventDay: EventDay) {
@@ -60,10 +59,45 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         })
     }
 
+    private fun carregarEventos() {
+        Thread {
+            try {
+                val eventosApi = EventApi.fetchEventos()
+                val eventosConvertidos = eventosApi.map { e ->
+                    val cal = Calendar.getInstance()
+                    try {
+                        cal.time = formatoISO.parse(e.startTime)
+                    } catch (_: Exception) { }
+                    e // já é um Evento no novo formato
+                }
+
+                requireActivity().runOnUiThread {
+                    todosEventos = eventosConvertidos
+                    atualizarEventosNoCalendario()
+                    mostrarEventos(todosEventos)
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+        }.start()
+    }
+
     private fun atualizarEventosNoCalendario() {
-        val eventos = todosEventos.map { EventDay(it.data, R.drawable.ic_event_marker) }.toMutableList()
-        diaSelecionado?.let { eventos.add(EventDay(it, R.drawable.ic_day_selected)) }
-        calendarView.setEvents(eventos)
+        val eventosMarcados = todosEventos.mapNotNull { evento ->
+            try {
+                val cal = Calendar.getInstance()
+                cal.time = formatoISO.parse(evento.startTime)!!
+                EventDay(cal, R.drawable.ic_event_marker)
+            } catch (_: Exception) {
+                null
+            }
+        }.toMutableList()
+
+        diaSelecionado?.let {
+            eventosMarcados.add(EventDay(it, R.drawable.ic_day_selected))
+        }
+
+        calendarView.setEvents(eventosMarcados)
     }
 
     private fun ehMesmoDia(c1: Calendar, c2: Calendar): Boolean {
@@ -73,7 +107,15 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
     }
 
     private fun filtrarEventosPorDia(dataSelecionada: Calendar) {
-        val eventosDoDia = todosEventos.filter { ehMesmoDia(it.data, dataSelecionada) }
+        val eventosDoDia = todosEventos.filter { evento ->
+            try {
+                val calEvento = Calendar.getInstance()
+                calEvento.time = formatoISO.parse(evento.startTime)!!
+                ehMesmoDia(calEvento, dataSelecionada)
+            } catch (_: Exception) {
+                false
+            }
+        }
         mostrarEventos(eventosDoDia)
     }
 
@@ -90,27 +132,16 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         val tvTitulo = view.findViewById<TextView>(R.id.tvTituloEvento)
         val tvDescricao = view.findViewById<TextView>(R.id.tvDescricaoEvento)
         val tvDataHora = view.findViewById<TextView>(R.id.tvDataHoraEvento)
-        val btnInscrever = view.findViewById<Button>(R.id.btnInscreverEvento)
-        val chipInscrito = view.findViewById<Chip>(R.id.chipInscrito)
         val btnFechar = view.findViewById<Button>(R.id.buttonFecharEvento)
 
-        tvTitulo.text = evento.titulo
-        tvDescricao.text = evento.descricao
-        val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        tvDataHora.text = formato.format(evento.data.time)
+        tvTitulo.text = evento.title
+        tvDescricao.text = evento.description ?: "Sem descrição"
 
-        atualizarEstadoInscricao(evento.inscrito, btnInscrever, chipInscrito)
-
-        // alterna inscrição/cancelamento
-        btnInscrever.setOnClickListener {
-            evento.inscrito = !evento.inscrito
-            atualizarEstadoInscricao(evento.inscrito, btnInscrever, chipInscrito)
-
-            if (evento.inscrito) {
-                btnInscrever.text = "Cancelar inscrição"
-            } else {
-                btnInscrever.text = "Inscrever-se"
-            }
+        try {
+            val dataFormatada = formatoExibicao.format(formatoISO.parse(evento.startTime)!!)
+            tvDataHora.text = dataFormatada
+        } catch (_: Exception) {
+            tvDataHora.text = "Data inválida"
         }
 
         btnFechar.setOnClickListener { dialog.dismiss() }
@@ -118,19 +149,4 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         dialog.setContentView(view)
         dialog.show()
     }
-
-    private fun atualizarEstadoInscricao(
-        inscrito: Boolean,
-        btnInscrever: Button,
-        chip: Chip
-    ) {
-        if (inscrito) {
-            btnInscrever.text = "Cancelar inscrição"
-            chip.visibility = View.VISIBLE
-        } else {
-            btnInscrever.text = "Inscrever-se"
-            chip.visibility = View.GONE
-        }
-    }
-
 }

@@ -43,7 +43,6 @@ class LoginActivity : AppCompatActivity() {
         matriculaEditText = findViewById(R.id.matriculaEditText)
         senhaEditText = findViewById(R.id.senhaEditText)
         loginButton = findViewById(R.id.loginButton)
-        adminButton = findViewById(R.id.btnAdmin)
         cadastroLinkTextView = findViewById(R.id.cadastroLinkTextView)
         cadastrarTextView = findViewById(R.id.cadastrar)
         toolbar = findViewById(R.id.toolbar)
@@ -93,10 +92,6 @@ class LoginActivity : AppCompatActivity() {
                     }
                 }
             }
-        }
-
-        adminButton.setOnClickListener {
-            startActivity(Intent(this, AdminActivity::class.java))
         }
 
         cadastroLinkTextView.setOnClickListener {
