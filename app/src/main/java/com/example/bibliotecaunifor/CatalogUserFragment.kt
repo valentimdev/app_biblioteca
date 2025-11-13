@@ -60,8 +60,6 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
         RetrofitClient.bookApi.getBooks(token).enqueue(object : Callback<List<Book>> {
             override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
                 android.util.Log.d("CatalogUserFragment", "Response code: ${response.code()}")
-                android.util.Log.d("CatalogUserFragment", "Body: ${response.body()}")
-
                 if (response.isSuccessful) {
                     allBooks.clear()
                     allBooks.addAll(response.body() ?: emptyList())
@@ -96,11 +94,16 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
         var list = allBooks.asSequence()
 
         if (query.isNotBlank()) {
-            list = list.filter { it.title.contains(query, true) || it.author.contains(query, true) }
+            list = list.filter {
+                it.title.contains(query, ignoreCase = true) ||
+                        it.author.contains(query, ignoreCase = true)
+            }
+        }
+
+        if (showOnlyAvailable) {
+            list = list.filter { it.availableCopies > 0 }
         }
 
         adapter.updateData(list.toList())
     }
-
-
 }

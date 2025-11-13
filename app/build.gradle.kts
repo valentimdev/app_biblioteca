@@ -44,7 +44,6 @@ dependencies {
     // escolha UMA das linhas abaixo:
     implementation(libs.material)
     // ou: implementation("com.google.android.material:material:1.12.0")
-
     implementation("com.applandeo:material-calendar-view:1.9.2")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -60,6 +59,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0")
     implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.core.i18n)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
