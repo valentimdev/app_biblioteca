@@ -6,8 +6,6 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
-import java.text.SimpleDateFormat
-import java.util.*
 
 object EventApi {
 
@@ -27,16 +25,27 @@ object EventApi {
 
                 val jsonArray = JSONArray(response)
                 val eventos = mutableListOf<Evento>()
-                val formato = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
 
                 for (i in 0 until jsonArray.length()) {
                     val obj = jsonArray.getJSONObject(i)
-                    val titulo = obj.getString("title")
-                    val descricao = obj.optString("description", "")
-                    val data = Calendar.getInstance().apply {
-                        time = formato.parse(obj.getString("startTime")) ?: Date()
-                    }
-                    eventos.add(Evento(titulo, data, descricao))
+
+                    val evento = Evento(
+                        id = obj.getString("id"),
+                        title = obj.getString("title"),
+                        description = obj.optString("description", null),
+                        startTime = obj.getString("startTime"),
+                        endTime = obj.getString("endTime"),
+                        location = obj.optString("location", null),
+                        imageUrl = obj.optString("imageUrl", null),
+                        lecturers = obj.optString("lecturers", null),
+                        seats = obj.optInt("seats", 0),
+                        isDisabled = obj.optBoolean("isDisabled", false),
+                        adminId = obj.optString("adminId", ""),
+                        createdAt = obj.optString("createdAt", ""),
+                        updatedAt = obj.optString("updatedAt", "")
+                    )
+
+                    eventos.add(evento)
                 }
 
                 eventos

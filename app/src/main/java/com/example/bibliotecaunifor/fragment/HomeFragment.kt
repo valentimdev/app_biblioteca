@@ -1,6 +1,8 @@
-package com.example.bibliotecaunifor.ui.home
+package com.example.bibliotecaunifor.fragment
 
+import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,14 +12,12 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import androidx.media3.common.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.RecommendationsAdapter
 import com.example.bibliotecaunifor.api.RetrofitClient
-import com.example.bibliotecaunifor.models.EventDto
 import com.example.bibliotecaunifor.models.Rental
 import com.example.bibliotecaunifor.services.EventService
 import com.example.bibliotecaunifor.utils.AuthUtils

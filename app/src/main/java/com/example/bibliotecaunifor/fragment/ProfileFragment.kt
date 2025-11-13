@@ -31,20 +31,107 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
         val recyclerLivros = view.findViewById<RecyclerView>(R.id.recyclerLivros)
         val recyclerEventos = view.findViewById<RecyclerView>(R.id.recyclerEventos)
 
-        val livros = listOf("Dom Casmurro", "O Hobbit", "1984", "O Pequeno Príncipe", "O Alquimista")
-        val eventos = listOf(
-            Evento("Feira do Livro", Calendar.getInstance(), "Descrição do evento"),
-            Evento("Semana da Leitura", Calendar.getInstance(), "Descrição do evento"),
-            Evento("Sarau de Poesia", Calendar.getInstance(), "Descrição do evento"),
-            Evento("Encontro Literário", Calendar.getInstance(), "Descrição do evento")
+        val livros = listOf(
+            "Dom Casmurro",
+            "O Hobbit",
+            "1984",
+            "O Pequeno Príncipe",
+            "O Alquimista"
         )
 
-        recyclerLivros.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        /*
+        lifecycleScope.launch {
+            try {
+                // Supondo que haverá um endpoint como /users/{id}/borrowed-books
+                val userId = UsuarioLogado.id
+                val response = LivroApi.getEmprestimosDoUsuario(userId)
+
+                if (response.isSuccessful) {
+                    val livrosEmprestados = response.body() ?: emptyList()
+                    recyclerLivros.adapter = LivroAdapter(livrosEmprestados.map { it.titulo }) { livro ->
+                        mostrarDialogLivro(livro.titulo)
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "Erro ao carregar livros emprestados", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(requireContext(), "Falha na conexão com o servidor", Toast.LENGTH_SHORT).show()
+            }
+        }
+        */
+
+        val eventos = listOf(
+            Evento(
+                id = "1",
+                title = "Feira do Livro",
+                description = "Descrição do evento",
+                startTime = "2025-11-11T19:00:00.000Z",
+                endTime = "2025-11-11T21:00:00.000Z",
+                location = "Auditório Unifor",
+                imageUrl = null,
+                lecturers = null,
+                seats = 100,
+                isDisabled = false,
+                adminId = "admin-mock",
+                createdAt = "2025-11-01T00:00:00.000Z",
+                updatedAt = "2025-11-01T00:00:00.000Z"
+            ),
+            Evento(
+                id = "2",
+                title = "Semana da Leitura",
+                description = "Evento cultural com debates e leituras coletivas",
+                startTime = "2025-11-20T18:00:00.000Z",
+                endTime = "2025-11-20T20:00:00.000Z",
+                location = "Biblioteca Central",
+                imageUrl = null,
+                lecturers = null,
+                seats = 80,
+                isDisabled = false,
+                adminId = "admin-mock",
+                createdAt = "2025-11-01T00:00:00.000Z",
+                updatedAt = "2025-11-01T00:00:00.000Z"
+            ),
+            Evento(
+                id = "3",
+                title = "Sarau de Poesia",
+                description = "Noite especial de poesia e música",
+                startTime = "2025-11-25T19:30:00.000Z",
+                endTime = "2025-11-25T22:00:00.000Z",
+                location = "Pátio da Unifor",
+                imageUrl = null,
+                lecturers = null,
+                seats = 50,
+                isDisabled = false,
+                adminId = "admin-mock",
+                createdAt = "2025-11-01T00:00:00.000Z",
+                updatedAt = "2025-11-01T00:00:00.000Z"
+            ),
+            Evento(
+                id = "4",
+                title = "Encontro Literário",
+                description = "Discussão sobre literatura moderna",
+                startTime = "2025-12-01T17:00:00.000Z",
+                endTime = "2025-12-01T19:00:00.000Z",
+                location = "Sala 101 - Bloco C",
+                imageUrl = null,
+                lecturers = null,
+                seats = 60,
+                isDisabled = false,
+                adminId = "admin-mock",
+                createdAt = "2025-11-01T00:00:00.000Z",
+                updatedAt = "2025-11-01T00:00:00.000Z"
+            )
+        )
+
+        recyclerLivros.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         recyclerLivros.adapter = LivroAdapter(livros) { livro ->
             mostrarDialogLivro(livro)
         }
 
-        recyclerEventos.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        recyclerEventos.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         recyclerEventos.adapter = EventoCarrosselAdapter(eventos) { evento ->
             mostrarDialogEvento(evento)
         }
@@ -118,7 +205,6 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
         dialog.setContentView(R.layout.dialog_info_evento)
         dialog.window?.setBackgroundDrawableResource(android.R.color.white)
 
-        // Largura maior
         val layoutParams = dialog.window?.attributes
         layoutParams?.width = (resources.displayMetrics.widthPixels * 0.9).toInt()
         dialog.window?.attributes = layoutParams
@@ -129,9 +215,9 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
         val buttonFechar = dialog.findViewById<Button>(R.id.buttonFecharEvento)
         val btnInscrever = dialog.findViewById<Button>(R.id.btnInscreverEvento)
 
-        textTitulo.text = evento.titulo
-        textDescricao.text = evento.descricao
-        textDataHora.text = evento.data.time.toString() // formate como quiser
+        textTitulo.text = evento.title
+        textDescricao.text = evento.description
+        textDataHora.text = evento.startTime
 
         // Remove o botão de inscrição para eventos do perfil
         btnInscrever.visibility = View.GONE
@@ -140,7 +226,6 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
 
         dialog.show()
     }
-
 
     private fun mostrarPopupEditarPerfil(view: View) {
         val dialog = Dialog(requireContext())

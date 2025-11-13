@@ -6,8 +6,8 @@ import androidx.fragment.app.Fragment
 import com.example.bibliotecaunifor.fragment.ChatFragment
 import com.example.bibliotecaunifor.fragment.EventsFragment
 import com.example.bibliotecaunifor.fragment.ProfileFragment
+import com.example.bibliotecaunifor.fragment.HomeFragment
 import com.example.bibliotecaunifor.CatalogUserFragment
-import com.example.bibliotecaunifor.ui.home.HomeFragment
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
-        // Tela inicial
+        // tela inicial (Home)
         if (savedInstanceState == null) {
             switchTo(HomeFragment(), "home")
             bottom.selectedItemId = R.id.nav_home

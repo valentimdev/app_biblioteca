@@ -21,7 +21,7 @@ class EventosAdapter(
 
     override fun onBindViewHolder(holder: EventoViewHolder, position: Int) {
         val evento = eventos[position]
-        holder.titulo.text = evento.titulo
+        holder.titulo.text = evento.title
 
         holder.itemView.setOnClickListener {
             onItemClick(evento)
