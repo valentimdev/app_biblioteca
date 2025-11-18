@@ -8,6 +8,8 @@ import com.example.bibliotecaunifor.fragment.EventsFragment
 import com.example.bibliotecaunifor.fragment.ProfileFragment
 import com.example.bibliotecaunifor.fragment.HomeFragment
 import com.example.bibliotecaunifor.CatalogUserFragment
+import com.example.bibliotecaunifor.api.RetrofitClient
+import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -22,6 +24,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val savedToken = AuthUtils.getToken(this)
+        RetrofitClient.setToken(savedToken)
         toolbar = findViewById(R.id.toolbar)
         bottom = findViewById(R.id.bottomNavigation)
 
@@ -70,6 +74,6 @@ class MainActivity : AppCompatActivity() {
     // FUNÇÃO QUE ATUALIZA A HOME
     fun refreshHomeFragment() {
         val homeFragment = supportFragmentManager.findFragmentByTag("home") as? HomeFragment
-        homeFragment?.loadMyLoans()
+        homeFragment?.reloadHome()
     }
 }

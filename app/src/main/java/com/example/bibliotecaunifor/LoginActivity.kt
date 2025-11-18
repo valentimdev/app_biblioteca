@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.bibliotecaunifor.network.NetworkHelper
 import com.example.bibliotecaunifor.utils.AuthUtils
 import com.example.bibliotecaunifor.admin.AdminActivity
+import com.example.bibliotecaunifor.api.RetrofitClient
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,7 +77,7 @@ class LoginActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (token != null && role != null) {
                         AuthUtils.saveToken(this@LoginActivity, token)
-
+                        RetrofitClient.setToken(token)
                         Toast.makeText(this@LoginActivity, "Login bem-sucedido!", Toast.LENGTH_SHORT).show()
 
                         val nextIntent = if (role.equals("ADMIN", ignoreCase = true)) {

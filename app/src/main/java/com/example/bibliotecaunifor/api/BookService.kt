@@ -2,7 +2,7 @@ package com.example.bibliotecaunifor.services
 
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.api.ApiConfig
-import com.example.bibliotecaunifor.models.Rental
+import com.example.bibliotecaunifor.Rental
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.*
