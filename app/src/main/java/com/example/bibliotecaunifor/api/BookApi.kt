@@ -3,7 +3,7 @@ package com.example.bibliotecaunifor.api
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.models.CreateBookDto
 import com.example.bibliotecaunifor.models.EditBookDto
-import com.example.bibliotecaunifor.models.Rental
+import com.example.bibliotecaunifor.Rental
 import retrofit2.Call
 import retrofit2.http.*
 

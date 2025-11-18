@@ -8,6 +8,7 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.bibliotecaunifor.ConfiguracoesActivity
 import com.example.bibliotecaunifor.Evento
 import com.example.bibliotecaunifor.MainActivity
@@ -15,7 +16,12 @@ import com.example.bibliotecaunifor.NotificacoesActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.EventoCarrosselAdapter
 import com.example.bibliotecaunifor.adapters.LivroAdapter
-import java.util.Calendar
+import com.example.bibliotecaunifor.api.RetrofitClient
+import com.example.bibliotecaunifor.models.EditUserRequest
+import com.example.bibliotecaunifor.models.UserResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
 
@@ -26,128 +32,126 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val buttonEditarPerfil = view.findViewById<ImageButton>(R.id.buttonEditarPerfil)
-        buttonEditarPerfil.setOnClickListener { mostrarPopupEditarPerfil(view) }
-
         val recyclerLivros = view.findViewById<RecyclerView>(R.id.recyclerLivros)
         val recyclerEventos = view.findViewById<RecyclerView>(R.id.recyclerEventos)
 
-        val livros = listOf(
-            "Dom Casmurro",
-            "O Hobbit",
-            "1984",
-            "O Pequeno Príncipe",
-            "O Alquimista"
-        )
+        val textViewUsername = view.findViewById<TextView>(R.id.textViewUsername)
+        val textViewEmail = view.findViewById<TextView>(R.id.textViewEmail)
+        val textViewMatricula = view.findViewById<TextView>(R.id.textViewMatricula)
+        val imageViewProfile = view.findViewById<ImageView>(R.id.imageViewProfile)
+        super.onViewCreated(view, savedInstanceState)
 
-        /*
-        lifecycleScope.launch {
-            try {
-                // Supondo que haverá um endpoint como /users/{id}/borrowed-books
-                val userId = UsuarioLogado.id
-                val response = LivroApi.getEmprestimosDoUsuario(userId)
+        buttonEditarPerfil.setOnClickListener { mostrarPopupEditarPerfil(view) }
 
-                if (response.isSuccessful) {
-                    val livrosEmprestados = response.body() ?: emptyList()
-                    recyclerLivros.adapter = LivroAdapter(livrosEmprestados.map { it.titulo }) { livro ->
-                        mostrarDialogLivro(livro.titulo)
-                    }
-                } else {
-                    Toast.makeText(requireContext(), "Erro ao carregar livros emprestados", Toast.LENGTH_SHORT).show()
+        recyclerLivros.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        recyclerEventos.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
+
+        RetrofitClient.userApi.getMe().enqueue(object : Callback<UserResponse> {
+            override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                if (!response.isSuccessful || response.body() == null) {
+                    Toast.makeText(requireContext(), "Erro ao carregar o usuário", Toast.LENGTH_SHORT).show()
+                    return
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(requireContext(), "Falha na conexão com o servidor", Toast.LENGTH_SHORT).show()
+
+                val user = response.body()!!
+
+                textViewUsername.text = user.name
+                textViewEmail.text = user.email
+                textViewMatricula.text = user.matricula
+
+                Glide.with(requireContext())
+                    .load(user.imageUrl)
+                    .placeholder(R.drawable.placeholder_user)
+                    .error(R.drawable.placeholder_user)
+                    .into(imageViewProfile)
+
+                // LISTA DE LIVROS
+                val livros = user.rentals.map { it.book.title }
+                recyclerLivros.adapter = LivroAdapter(livros) { livro ->
+                    mostrarDialogLivro(livro)
+                }
+
+                val eventos = user.events.map {
+                    Evento(
+                        id = it.id,
+                        title = it.title,
+                        description = it.description,
+                        startTime = it.startTime,
+                        endTime = it.endTime ?: "",
+                        location = it.location,
+                        imageUrl = it.imageUrl,
+
+                        lecturers = "",
+                        seats = 0,
+                        isDisabled = false,
+                        adminId = "",
+                        createdAt = "",
+                        updatedAt = ""
+                    )
+                }
+
+                recyclerEventos.adapter = EventoCarrosselAdapter(eventos) { evento ->
+                    mostrarDialogEvento(evento)
+                }
             }
-        }
-        */
 
-        val eventos = listOf(
-            Evento(
-                id = "1",
-                title = "Feira do Livro",
-                description = "Descrição do evento",
-                startTime = "2025-11-11T19:00:00.000Z",
-                endTime = "2025-11-11T21:00:00.000Z",
-                location = "Auditório Unifor",
-                imageUrl = null,
-                lecturers = null,
-                seats = 100,
-                isDisabled = false,
-                adminId = "admin-mock",
-                createdAt = "2025-11-01T00:00:00.000Z",
-                updatedAt = "2025-11-01T00:00:00.000Z"
-            ),
-            Evento(
-                id = "2",
-                title = "Semana da Leitura",
-                description = "Evento cultural com debates e leituras coletivas",
-                startTime = "2025-11-20T18:00:00.000Z",
-                endTime = "2025-11-20T20:00:00.000Z",
-                location = "Biblioteca Central",
-                imageUrl = null,
-                lecturers = null,
-                seats = 80,
-                isDisabled = false,
-                adminId = "admin-mock",
-                createdAt = "2025-11-01T00:00:00.000Z",
-                updatedAt = "2025-11-01T00:00:00.000Z"
-            ),
-            Evento(
-                id = "3",
-                title = "Sarau de Poesia",
-                description = "Noite especial de poesia e música",
-                startTime = "2025-11-25T19:30:00.000Z",
-                endTime = "2025-11-25T22:00:00.000Z",
-                location = "Pátio da Unifor",
-                imageUrl = null,
-                lecturers = null,
-                seats = 50,
-                isDisabled = false,
-                adminId = "admin-mock",
-                createdAt = "2025-11-01T00:00:00.000Z",
-                updatedAt = "2025-11-01T00:00:00.000Z"
-            ),
-            Evento(
-                id = "4",
-                title = "Encontro Literário",
-                description = "Discussão sobre literatura moderna",
-                startTime = "2025-12-01T17:00:00.000Z",
-                endTime = "2025-12-01T19:00:00.000Z",
-                location = "Sala 101 - Bloco C",
-                imageUrl = null,
-                lecturers = null,
-                seats = 60,
-                isDisabled = false,
-                adminId = "admin-mock",
-                createdAt = "2025-11-01T00:00:00.000Z",
-                updatedAt = "2025-11-01T00:00:00.000Z"
-            )
-        )
+            override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                Toast.makeText(requireContext(), "Erro ao carregar perfil: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
 
-        recyclerLivros.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        recyclerLivros.adapter = LivroAdapter(livros) { livro ->
-            mostrarDialogLivro(livro)
-        }
-
-        recyclerEventos.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        recyclerEventos.adapter = EventoCarrosselAdapter(eventos) { evento ->
-            mostrarDialogEvento(evento)
-        }
-
+        // Botões superiores
         val buttonConfiguracoes = view.findViewById<ImageButton>(R.id.buttonConfiguracoes)
         val buttonNotificacoes = view.findViewById<ImageButton>(R.id.buttonNotificacoes)
 
-        buttonConfiguracoes.setOnClickListener {
-            val intent = Intent(requireContext(), ConfiguracoesActivity::class.java)
-            startActivity(intent)
+        buttonConfiguracoes.setOnClickListener { startActivity(Intent(requireContext(), ConfiguracoesActivity::class.java)) }
+        buttonNotificacoes.setOnClickListener { startActivity(Intent(requireContext(), NotificacoesActivity::class.java)) }
+    }
+
+    private fun mostrarPopupEditarPerfil(view: View) {
+        val dialog = Dialog(requireContext())
+        dialog.setContentView(R.layout.dialog_editar_perfil)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val editUsername = dialog.findViewById<EditText>(R.id.editUsername)
+        val editEmail = dialog.findViewById<EditText>(R.id.editEmail)
+        val buttonSalvar = dialog.findViewById<Button>(R.id.buttonSalvar)
+
+        val textViewUsername = view.findViewById<TextView>(R.id.textViewUsername)
+        val textViewEmail = view.findViewById<TextView>(R.id.textViewEmail)
+
+        editUsername.setText(textViewUsername.text)
+        editEmail.setText(textViewEmail.text)
+
+        buttonSalvar.setOnClickListener {
+            val request = EditUserRequest(
+                name = editUsername.text.toString().ifBlank { null },
+                email = editEmail.text.toString().ifBlank { null }
+            )
+
+            RetrofitClient.userApi.editUser(request).enqueue(object : Callback<UserResponse> {
+                override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                    if (!response.isSuccessful || response.body() == null) {
+                        Toast.makeText(requireContext(), "Erro ao salvar alterações", Toast.LENGTH_SHORT).show()
+                        return
+                    }
+
+                    val updated = response.body()!!
+                    textViewUsername.text = updated.name
+                    textViewEmail.text = updated.email
+
+                    Toast.makeText(requireContext(), "Perfil atualizado!", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                }
+
+                override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                    Toast.makeText(requireContext(), "Erro: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
 
-        buttonNotificacoes.setOnClickListener {
-            val intent = Intent(requireContext(), NotificacoesActivity::class.java)
-            startActivity(intent)
-        }
+        dialog.show()
     }
 
     private fun mostrarDialogLivro(livro: String) {
@@ -155,47 +159,8 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
         dialog.setContentView(R.layout.dialog_info_livro)
         dialog.window?.setBackgroundDrawableResource(android.R.color.white)
 
-        val layoutParams = dialog.window?.attributes
-        layoutParams?.width = (resources.displayMetrics.widthPixels * 0.9).toInt()
-        dialog.window?.attributes = layoutParams
-
-        val textTitulo = dialog.findViewById<TextView>(R.id.textTituloLivro)
-        val textDescricao = dialog.findViewById<TextView>(R.id.textDescricaoLivro)
-        val textDataEmprestado = dialog.findViewById<TextView>(R.id.textDataEmprestado)
-        val textDataDevolucao = dialog.findViewById<TextView>(R.id.textDataDevolucao)
-        val buttonFechar = dialog.findViewById<Button>(R.id.buttonFechar)
-
-        textTitulo.text = livro
-
-        when (livro) {
-            "Dom Casmurro" -> {
-                textDescricao.text = "Romance clássico de Machado de Assis."
-                textDataEmprestado.text = "Emprestado: 01/10/2025"
-                textDataDevolucao.text = "Devolução: 10/10/2025"
-            }
-            "O Hobbit" -> {
-                textDescricao.text = "Aventura fantástica de J.R.R. Tolkien."
-                textDataEmprestado.text = "Emprestado: 02/10/2025"
-                textDataDevolucao.text = "Devolução: 12/10/2025"
-            }
-            "1984" -> {
-                textDescricao.text = "Distopia clássica de George Orwell."
-                textDataEmprestado.text = "Emprestado: 05/10/2025"
-                textDataDevolucao.text = "Devolução: 15/10/2025"
-            }
-            "O Pequeno Príncipe" -> {
-                textDescricao.text = "Obra poética de Antoine de Saint-Exupéry."
-                textDataEmprestado.text = "Emprestado: 06/10/2025"
-                textDataDevolucao.text = "Devolução: 16/10/2025"
-            }
-            "O Alquimista" -> {
-                textDescricao.text = "Fábula filosófica de Paulo Coelho."
-                textDataEmprestado.text = "Emprestado: 07/10/2025"
-                textDataDevolucao.text = "Devolução: 17/10/2025"
-            }
-        }
-
-        buttonFechar.setOnClickListener { dialog.dismiss() }
+        dialog.findViewById<TextView>(R.id.textTituloLivro).text = livro
+        dialog.findViewById<Button>(R.id.buttonFechar).setOnClickListener { dialog.dismiss() }
 
         dialog.show()
     }
@@ -205,50 +170,12 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
         dialog.setContentView(R.layout.dialog_info_evento)
         dialog.window?.setBackgroundDrawableResource(android.R.color.white)
 
-        val layoutParams = dialog.window?.attributes
-        layoutParams?.width = (resources.displayMetrics.widthPixels * 0.9).toInt()
-        dialog.window?.attributes = layoutParams
+        dialog.findViewById<TextView>(R.id.tvTituloEvento).text = evento.title
+        dialog.findViewById<TextView>(R.id.tvDescricaoEvento).text = evento.description
+        dialog.findViewById<TextView>(R.id.tvDataHoraEvento).text = evento.startTime
 
-        val textTitulo = dialog.findViewById<TextView>(R.id.tvTituloEvento)
-        val textDescricao = dialog.findViewById<TextView>(R.id.tvDescricaoEvento)
-        val textDataHora = dialog.findViewById<TextView>(R.id.tvDataHoraEvento)
-        val buttonFechar = dialog.findViewById<Button>(R.id.buttonFecharEvento)
-        val btnInscrever = dialog.findViewById<Button>(R.id.btnInscreverEvento)
-
-        textTitulo.text = evento.title
-        textDescricao.text = evento.description
-        textDataHora.text = evento.startTime
-
-        // Remove o botão de inscrição para eventos do perfil
-        btnInscrever.visibility = View.GONE
-
-        buttonFechar.setOnClickListener { dialog.dismiss() }
-
-        dialog.show()
-    }
-
-    private fun mostrarPopupEditarPerfil(view: View) {
-        val dialog = Dialog(requireContext())
-        dialog.setContentView(R.layout.dialog_editar_perfil)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        val layoutParams = dialog.window?.attributes
-        layoutParams?.width = (resources.displayMetrics.widthPixels * 0.9).toInt()
-        dialog.window?.attributes = layoutParams
-
-        val editUsername = dialog.findViewById<EditText>(R.id.editUsername)
-        val buttonSalvar = dialog.findViewById<Button>(R.id.buttonSalvar)
-        val buttonMudarFoto = dialog.findViewById<ImageButton>(R.id.buttonMudarFoto)
-
-        val textViewUsername = view.findViewById<TextView>(R.id.textViewUsername)
-        editUsername.setText(textViewUsername.text)
-
-        buttonMudarFoto.setOnClickListener {}
-
-        buttonSalvar.setOnClickListener {
-            textViewUsername.text = editUsername.text.toString()
-            dialog.dismiss()
-        }
+        dialog.findViewById<Button>(R.id.btnInscreverEvento).visibility = View.GONE
+        dialog.findViewById<Button>(R.id.buttonFecharEvento).setOnClickListener { dialog.dismiss() }
 
         dialog.show()
     }

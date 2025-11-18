@@ -1,7 +1,4 @@
-// models/Rental.kt
-package com.example.bibliotecaunifor.models
-
-import com.example.bibliotecaunifor.Book
+package com.example.bibliotecaunifor
 
 data class Rental(
     val id: String,

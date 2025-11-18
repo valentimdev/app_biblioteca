@@ -1,52 +1,51 @@
 package com.example.bibliotecaunifor.fragment
 
-import android.app.Dialog
+import com.example.bibliotecaunifor.models.EventResponse
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.R
+import com.example.bibliotecaunifor.Rental
 import com.example.bibliotecaunifor.adapters.RecommendationsAdapter
 import com.example.bibliotecaunifor.api.RetrofitClient
-import com.example.bibliotecaunifor.models.Rental
-import com.example.bibliotecaunifor.services.EventService
+import com.example.bibliotecaunifor.models.UserResponse
 import com.example.bibliotecaunifor.utils.AuthUtils
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.mapNotNull
 
 class HomeFragment : Fragment() {
 
-    private val bookApi by lazy { RetrofitClient.bookApi }
     private lateinit var txtWelcome: TextView
     private lateinit var loansList: LinearLayout
     private lateinit var txtNextEvents: TextView
-    private lateinit var rvRecommendations: RecyclerView
+    private lateinit var rvRecommendations: androidx.recyclerview.widget.RecyclerView
+
+    private val userApi by lazy { RetrofitClient.userApi }
+    private val bookApi by lazy { RetrofitClient.bookApi }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: android.view.LayoutInflater, container: android.view.ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): android.view.View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         bindViews(view)
         setupRecyclerView()
-        loadData()
+
+        loadUserData()        // pega /users/me -> nome, empréstimos, eventos
+        loadRecommendations() // pega livros recomendados (passando token)
+
         return view
     }
 
-    private fun bindViews(view: View) {
+    private fun bindViews(view: android.view.View) {
         txtWelcome = view.findViewById(R.id.txtWelcome)
         loansList = view.findViewById(R.id.loansList)
         txtNextEvents = view.findViewById(R.id.txtNextEvents)
@@ -56,188 +55,147 @@ class HomeFragment : Fragment() {
     private fun setupRecyclerView() {
         rvRecommendations.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         rvRecommendations.adapter = RecommendationsAdapter(emptyList()) { bookId ->
-            Toast.makeText(context, "Recomendação: $bookId", Toast.LENGTH_SHORT).show()
-            // Abre detalhe se quiser
+            Toast.makeText(context, "Recomendação selecionada: $bookId", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun loadData() {
-        loadWelcome()
-        loadMyLoans()
-        loadNextEvents()
-        loadRecommendations()
-    }
-
-    private fun loadWelcome() {
-        txtWelcome.text = "OLA FULANO, BEM VINDO"
-    }
-
-    // === EMPRÉSTIMOS ===
-    fun loadMyLoans() {
-        val token = getAuthToken() ?: return showError("Faça login")
-
-        Log.d("HomeFragment", "Carregando empréstimos...")
-
-        RetrofitClient.bookApi.getMyRentals(token).enqueue(object : Callback<List<Rental>> {
-            override fun onResponse(call: Call<List<Rental>>, response: Response<List<Rental>>) {
-                Log.d("HomeFragment", "Response: ${response.code()}")
-
-                if (response.isSuccessful) {
-                    val rentals = response.body() ?: emptyList()
-                    Log.d("HomeFragment", "Rentals recebidos: ${rentals.size}")
-                    rentals.forEach { r ->
-                        Log.d("HomeFragment", "Rental: ${r.book.title}, returnDate: ${r.returnDate}")
-                    }
-
-                    populateLoans(rentals)
-                } else {
-                    showError("Erro: ${response.code()}")
+    // ============================================================
+    // 1) Carrega /users/me → Nome, Empréstimos, Eventos
+    // ============================================================
+    private fun loadUserData() {
+        userApi.getMe().enqueue(object : Callback<UserResponse> {
+            override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                if (!response.isSuccessful) {
+                    showError("Erro ao carregar usuário", response.code())
+                    return
                 }
+
+                val user = response.body() ?: run {
+                    showError("Corpo de usuário vazio")
+                    return
+                }
+
+                Log.d("HomeFragment", "User recebido: ${user.name}")
+                txtWelcome.text = "Olá ${user.name}, bem-vindo!"
+                populateLoans(user.rentals)
+                populateEvents(user.events)
             }
 
-            override fun onFailure(call: Call<List<Rental>>, t: Throwable) {
-                Log.e("HomeFragment", "Falha na rede", t)
-                showError("Sem conexão")
+            override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                showError("Falha ao buscar usuário: ${t.message}")
             }
         })
     }
 
+    fun reloadHome() {
+        loadUserData()
+        loadRecommendations()
+    }
+
     private fun populateLoans(rentals: List<Rental>) {
         loansList.removeAllViews()
-        val validRentals = rentals.filter {
-            it.book.id.isNotBlank() && it.book.title.isNotBlank()
-        }
-
-        if (validRentals.isEmpty()) {
+        if (rentals.isEmpty()) {
             addEmptyView("Nenhum empréstimo ativo")
             return
         }
 
-        validRentals.forEach { rental ->
-            val itemView = LayoutInflater.from(context).inflate(R.layout.item_loan, loansList, false)
+        rentals.forEach { rental ->
+            val itemView = android.view.LayoutInflater.from(context).inflate(R.layout.item_loan, loansList, false)
             itemView.findViewById<TextView>(R.id.tvTitle).text = rental.book.title
             itemView.findViewById<TextView>(R.id.tvDue).text = "Devolução: ${formatDate(rental.dueDate)}"
 
             itemView.findViewById<Button>(R.id.btnReturn).setOnClickListener {
-                AlertDialog.Builder(requireContext())
-                    .setTitle("Devolver")
-                    .setMessage("Devolver \"${rental.book.title}\"?")
-                    .setPositiveButton("Sim") { _, _ -> returnBook(rental.book.id) }
-                    .setNegativeButton("Não", null)
-                    .show()
+                confirmBookReturn(rental.book.id, rental.book.title)
             }
 
             loansList.addView(itemView)
         }
     }
 
+    private fun confirmBookReturn(bookId: String, title: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Devolver")
+            .setMessage("Deseja devolver \"$title\"?")
+            .setPositiveButton("Sim") { _, _ -> returnBook(bookId) }
+            .setNegativeButton("Não", null)
+            .show()
+    }
+
+    // ============================================================
+    // 3) returnBook -> chama bookApi.returnBook(bookId, token)
+    // ============================================================
     private fun returnBook(bookId: String) {
-        val token = getAuthToken() ?: return showError("Token inválido")
-
-        // Primeiro verifica se o livro existe
-        RetrofitClient.bookApi.getBookById(bookId, token).enqueue(object : Callback<Book> {
-            override fun onResponse(call: Call<Book>, response: Response<Book>) {
-                if (response.isSuccessful && response.body() != null) {
-                    // Livro existe → devolve
-                    actuallyReturnBook(bookId, token)
-                } else {
-                    Toast.makeText(context, "Livro não encontrado. Empréstimo removido.", Toast.LENGTH_LONG).show()
-                    loadMyLoans() // Recarrega sem o livro deletado
-                }
-            }
-
-            override fun onFailure(call: Call<Book>, t: Throwable) {
-                showError("Sem conexão")
-            }
-        })
-    }
-
-    private fun actuallyReturnBook(bookId: String, token: String) {
-        RetrofitClient.bookApi.returnBook(bookId, token)
-            .enqueue(object : Callback<Map<String, Boolean>> {
-                override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) {
-                    if (response.isSuccessful && response.body()?.get("success") == true) {
-                        Toast.makeText(context, "Devolvido com sucesso!", Toast.LENGTH_SHORT).show()
-                        loadMyLoans()
-                    } else {
-                        showError("Falha ao devolver")
-                    }
-                }
-
-                override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
-                    showError("Sem conexão")
-                }
-            })
-    }
-
-    private fun renewLoan(bookId: String) {
-        val token = getAuthToken() ?: return showError("Token inválido")
-        val dueDate = Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, 7) }
-        val isoDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(dueDate.time)
-
-        val body = mapOf("dueDate" to isoDate)
-        bookApi.rentBook(bookId, body, token).enqueue(object : Callback<Map<String, Boolean>> {
+        val token = getAuthToken() ?: return showError("Faça login para devolver livro")
+        // token já tem o prefixo "Bearer " conforme sua função getAuthToken()
+        bookApi.returnBook(bookId, token).enqueue(object : Callback<Map<String, Boolean>> {
             override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) {
                 if (response.isSuccessful && response.body()?.get("success") == true) {
-                    Toast.makeText(context, "Renovado com sucesso!", Toast.LENGTH_SHORT).show()
-                    loadMyLoans()
+                    Toast.makeText(context, "Livro devolvido!", Toast.LENGTH_SHORT).show()
+                    loadUserData()
                 } else {
-                    Toast.makeText(context, "Não foi possível renovar", Toast.LENGTH_SHORT).show()
+                    showError("Erro ao devolver livro", response.code())
                 }
             }
 
             override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
-                showError("Erro ao renovar")
+                showError("Falha na rede ao devolver: ${t.message}")
             }
         })
     }
 
-    // === EVENTOS (HttpURLConnection) ===
-    private fun loadNextEvents() {
-        Thread {
-            val token = getAuthToken()
-            val events = EventService.getAllEvents(token)
-            val upcoming = events
-                .mapNotNull { event ->
-                    parseDate(event.startTime)?.let { date -> event to date }
-                }
-                .filter { (_, date) -> date.time > System.currentTimeMillis() }
-                .sortedBy { (_, date) -> date.time }
-                .take(3)
+    // ============================================================
+    // 4) Próximos Eventos (recebidos via /users/me)
+    // ============================================================
+    private fun populateEvents(events: List<EventResponse>) {
+        if (events.isEmpty()) {
+            txtNextEvents.text = "Nenhum evento próximo"
+            return
+        }
 
-            activity?.runOnUiThread {
-                if (upcoming.isEmpty()) {
-                    txtNextEvents.text = "Nenhum evento próximo"
-                } else {
-                    txtNextEvents.text = upcoming.joinToString("\n") { (event, date) ->
-                        "${event.title} - ${formatDateTime(date.time)}"
-                    }
-                }
-            }
-        }.start()
+        val upcoming = events
+            .mapNotNull { ev -> parseDate(ev.startTime)?.let { ev to it.time } }
+            .filter { it.second > System.currentTimeMillis() }
+            .sortedBy { it.second }
+            .take(3)
+
+        if (upcoming.isEmpty()) {
+            txtNextEvents.text = "Nenhum evento próximo"
+            return
+        }
+
+        txtNextEvents.text = upcoming.joinToString("\n") { (ev, ts) ->
+            "${ev.title} - ${formatDateTime(ts)}"
+        }
     }
 
-    // === RECOMENDAÇÕES ===
+    // ============================================================
+    // 5) Recomendações (passando token se bookApi exigir)
+    // ============================================================
     private fun loadRecommendations() {
-        val token = getAuthToken() ?: return
-        RetrofitClient.bookApi.getBooks(token).enqueue(object : Callback<List<Book>> {
+        val token = getAuthToken() ?: return // se precisar do token, força login
+        bookApi.getBooks(token).enqueue(object : Callback<List<Book>> {
             override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
-                if (response.isSuccessful) {
-                    val available = (response.body() ?: emptyList()).filter { it.availableCopies > 0 }
-                    val recommendations = available.shuffled().take(5)
-                    (rvRecommendations.adapter as? RecommendationsAdapter)?.updateBooks(recommendations)
+                if (!response.isSuccessful) {
+                    Log.e("HomeFragment", "Recomendações erro HTTP ${response.code()}")
+                    return
                 }
+                val books = response.body() ?: emptyList()
+                val recommendations = books.filter { it.availableCopies > 0 }.shuffled().take(5)
+                (rvRecommendations.adapter as? RecommendationsAdapter)?.updateBooks(recommendations)
             }
+
             override fun onFailure(call: Call<List<Book>>, t: Throwable) {
-                // Não trava
+                Log.e("HomeFragment", "Erro recomendação: ${t.message}")
             }
         })
     }
 
-    // === UTIL ===
+    // ============================================================
+    // UTIL
+    // ============================================================
     private fun getAuthToken(): String? {
-        val context = context ?: return null
-        val token = AuthUtils.getToken(context)
+        val ctx = context ?: return null
+        val token = AuthUtils.getToken(ctx) // retorna token puro, ex "eyJ..."
         return if (token != null) "Bearer $token" else null
     }
 
@@ -268,8 +226,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun formatDateTime(timestamp: Long): String {
-        val sdf = SimpleDateFormat("dd/MM 'às' HH:mm", Locale.getDefault())
-        return sdf.format(Date(timestamp))
+        return SimpleDateFormat("dd/MM 'às' HH:mm", Locale.getDefault()).format(Date(timestamp))
     }
 
     private fun addEmptyView(message: String) {
@@ -282,7 +239,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun showError(msg: String, code: Int? = null) {
-        val fullMsg = if (code != null) "$msg (HTTP $code)" else msg
-        Toast.makeText(context, fullMsg, Toast.LENGTH_LONG).show()
+        val complete = if (code != null) "$msg (HTTP $code)" else msg
+        Toast.makeText(context, complete, Toast.LENGTH_LONG).show()
     }
 }
