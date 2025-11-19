@@ -1,24 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:paddingStart="64dp"
-    android:paddingEnd="8dp"
-    android:paddingTop="4dp"
-    android:paddingBottom="4dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginStart="64dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginVertical="4dp"
+    android:layout_gravity="end">
 
-    <TextView
-        android:id="@+id/text_view_message"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/background_message_sent"
-        android:padding="12dp"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Esta é uma mensagem de exemplo que eu enviei para o chatbot." />
+        android:layout_margin="4dp"
+        app:cardBackgroundColor="@color/unifor_traditional_blue"
+        app:cardCornerRadius="18dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/text_message_sent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textColor="@android:color/white"
+            android:textSize="15sp" />
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>
