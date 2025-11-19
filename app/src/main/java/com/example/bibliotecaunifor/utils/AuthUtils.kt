@@ -35,4 +35,16 @@ object AuthUtils {
             remove(ROLE_KEY)
         }
     }
+
+    private const val NAME_KEY = "user_name"
+
+    fun saveUserName(context: Context, name: String) {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        prefs.edit().putString(NAME_KEY, name).apply()
+    }
+
+    fun getUserName(context: Context): String? {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        return prefs.getString(NAME_KEY, null)
+    }
 }

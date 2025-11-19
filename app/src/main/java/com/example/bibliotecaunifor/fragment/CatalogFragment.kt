@@ -1,35 +1,49 @@
 package com.example.bibliotecaunifor.fragment
 
-import android.app.AlertDialog
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.Toast
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bibliotecaunifor.Book
+import com.example.bibliotecaunifor.BookWithRentalStatus
 import com.example.bibliotecaunifor.MainActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.BookAdapter
+import com.example.bibliotecaunifor.adapters.LivroWithRentalAdapter
 import com.example.bibliotecaunifor.api.RetrofitClient
-import com.example.bibliotecaunifor.models.CreateBookDto
 import com.example.bibliotecaunifor.models.EditBookDto
-import com.example.bibliotecaunifor.ui.book.BookDetailFragment
 import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
 
 class CatalogFragment : Fragment(R.layout.fragment_catalog) {
 
     private val allBooks = mutableListOf<Book>()
+    private val allBooksWithRental = mutableListOf<BookWithRentalStatus>()
+
     private lateinit var adapter: BookAdapter
-    private var isAdmin = false // ou setar conforme login
+    private lateinit var adapterWithRental: LivroWithRentalAdapter
+
+    private var isAdmin = false
+    private var selectedImageUri: Uri? = null
+
+    companion object {
+        const val REQUEST_CODE_IMAGE = 1001
+    }
 
     override fun onResume() {
         super.onResume()
@@ -39,6 +53,8 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val rv = view.findViewById<RecyclerView>(R.id.rvBooks)
         rv.layoutManager = LinearLayoutManager(requireContext())
+
+        // Adapter antigo para uso geral (BookAdapter)
         adapter = BookAdapter(allBooks, isAdmin) { action, book ->
             when (action) {
                 "detail" -> parentFragmentManager.beginTransaction()
@@ -51,6 +67,7 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
         }
         rv.adapter = adapter
 
+        // Pesquisa
         val edtSearch = view.findViewById<EditText>(R.id.edtSearch)
         edtSearch.doAfterTextChanged { text ->
             val filtered = allBooks.filter {
@@ -65,32 +82,19 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
 
     private fun fetchBooks() {
         val tokenStr = AuthUtils.getToken(requireContext())
-        if (tokenStr.isNullOrEmpty()) {
-            android.util.Log.e("CatalogFragment", "Token nulo!")
-            return
-        }
+        if (tokenStr.isNullOrEmpty()) return
         val token = "Bearer $tokenStr"
 
         RetrofitClient.bookApi.getBooks(token).enqueue(object : Callback<List<Book>> {
             override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
-                android.util.Log.d("CatalogFragment", "Response code: ${response.code()}")
-                android.util.Log.d("CatalogFragment", "Body: ${response.body()}")
-
                 if (response.isSuccessful) {
                     allBooks.clear()
                     allBooks.addAll(response.body() ?: emptyList())
                     adapter.updateData(allBooks)
-                } else {
-                    android.util.Log.e(
-                        "CatalogFragment",
-                        "Erro ao buscar livros: ${response.code()} - ${response.errorBody()?.string()}"
-                    )
                 }
             }
 
-            override fun onFailure(call: Call<List<Book>>, t: Throwable) {
-                android.util.Log.e("CatalogFragment", "Falha na requisição", t)
-            }
+            override fun onFailure(call: Call<List<Book>>, t: Throwable) {}
         })
     }
 
@@ -114,17 +118,31 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
             .setTitle(if (book == null) "Adicionar Livro" else "Editar Livro")
             .setView(layout)
             .setPositiveButton("Salvar") { _, _ ->
-                val token = "Bearer ${AuthUtils.getToken(requireContext())}"
+                val tokenStr = AuthUtils.getToken(requireContext()) ?: return@setPositiveButton
+                val token = "Bearer $tokenStr"
+
+                val titlePart = edtTitulo.text.toString().toRequestBody("text/plain".toMediaType())
+                val authorPart = edtAutor.text.toString().toRequestBody("text/plain".toMediaType())
+                val isbnPart = edtIsbn.text.toString().toRequestBody("text/plain".toMediaType())
+                val descriptionPart = edtDescricao.text.toString().toRequestBody("text/plain".toMediaType())
+                val totalCopiesPart = (edtTotalCopies.text.toString().toIntOrNull() ?: 0)
+                    .toString().toRequestBody("text/plain".toMediaType())
+
+                val imagePart: MultipartBody.Part? = selectedImageUri?.let { uri ->
+                    val file = File(requireContext().contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor?.let { fd ->
+                        "/proc/self/fd/$fd"
+                    } ?: uri.path ?: return@let null)
+                    MultipartBody.Part.createFormData(
+                        "image",
+                        file.name,
+                        file.asRequestBody("image/*".toMediaType())
+                    )
+                }
 
                 if (book == null) {
-                    val dto = CreateBookDto(
-                        title = edtTitulo.text.toString(),
-                        author = edtAutor.text.toString(),
-                        isbn = edtIsbn.text.toString(),
-                        description = edtDescricao.text.toString(),
-                        totalCopies = edtTotalCopies.text.toString().toIntOrNull() ?: 0
-                    )
-                    RetrofitClient.bookApi.createBook(dto, token).enqueue(object : Callback<Book> {
+                    RetrofitClient.bookApi.createBook(
+                        titlePart, authorPart, isbnPart, descriptionPart, totalCopiesPart, imagePart, token
+                    ).enqueue(object : Callback<Book> {
                         override fun onResponse(call: Call<Book>, response: Response<Book>) { fetchBooks() }
                         override fun onFailure(call: Call<Book>, t: Throwable) { t.printStackTrace() }
                     })
@@ -144,6 +162,13 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_IMAGE && resultCode == Activity.RESULT_OK) {
+            selectedImageUri = data?.data
+        }
     }
 
     private fun removeBook(book: Book) {

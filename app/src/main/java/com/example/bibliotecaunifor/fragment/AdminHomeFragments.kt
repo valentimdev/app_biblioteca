@@ -1,19 +1,23 @@
 package com.example.bibliotecaunifor.admin
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.view.setMargins
 import androidx.fragment.app.Fragment
 import com.example.bibliotecaunifor.R
+import com.example.bibliotecaunifor.services.BookService
+import com.example.bibliotecaunifor.utils.AuthUtils
+import com.example.bibliotecaunifor.api.RetrofitClient
 
 class AdminHomeFragment : Fragment(R.layout.fragment_admin_home) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        fetchUserName()
+        fetchTotals()
 
         val container = view.findViewById<LinearLayout>(R.id.containerTopLivros)
 
@@ -38,12 +42,50 @@ class AdminHomeFragment : Fragment(R.layout.fragment_admin_home) {
             tvNome.text = titulo
             tvQtd.text = "$qtd"
 
-            // barra proporcional
             val params = barra.layoutParams as LinearLayout.LayoutParams
             params.weight = qtd.toFloat() / max
             barra.layoutParams = params
 
             container.addView(item)
         }
+    }
+
+    private fun fetchUserName() {
+        Thread {
+            try {
+                val call = RetrofitClient.userApi.getMe()
+                val response = call.execute()
+                val name = if (response.isSuccessful) response.body()?.name ?: "Fulano" else "Fulano"
+
+                requireActivity().runOnUiThread {
+                    view?.findViewById<TextView>(R.id.tvUserGreeting)?.text = "Olá, $name 👋"
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }.start()
+    }
+
+    private fun fetchTotals() {
+        Thread {
+            try {
+                val token = AuthUtils.getToken(requireContext())
+
+                val livros = BookService.getAllBooks(token)
+                val totalLivros = livros.size
+
+                val call = RetrofitClient.userApi.getAllUsers("Bearer $token")
+                val response = call.execute()
+                val totalAlunos = if (response.isSuccessful) response.body()?.size ?: 0 else 0
+
+                requireActivity().runOnUiThread {
+                    view?.findViewById<TextView>(R.id.tvTotalLivros)?.text = totalLivros.toString()
+                    view?.findViewById<TextView>(R.id.tvTotalAlunos)?.text = totalAlunos.toString()
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }.start()
     }
 }

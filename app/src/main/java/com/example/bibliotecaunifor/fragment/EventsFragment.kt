@@ -13,7 +13,9 @@ import com.example.bibliotecaunifor.MainActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.EventosAdapter
 import com.example.bibliotecaunifor.api.EventApi
+import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -133,10 +135,11 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         val tvDescricao = view.findViewById<TextView>(R.id.tvDescricaoEvento)
         val tvDataHora = view.findViewById<TextView>(R.id.tvDataHoraEvento)
         val btnFechar = view.findViewById<Button>(R.id.buttonFecharEvento)
+        val btnInscrever = view.findViewById<Button>(R.id.btnInscreverEvento)
+        val chipInscrito = view.findViewById<com.google.android.material.chip.Chip>(R.id.chipInscrito)
 
         tvTitulo.text = evento.title
         tvDescricao.text = evento.description ?: "Sem descrição"
-
         try {
             val dataFormatada = formatoExibicao.format(formatoISO.parse(evento.startTime)!!)
             tvDataHora.text = dataFormatada
@@ -145,6 +148,52 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         }
 
         btnFechar.setOnClickListener { dialog.dismiss() }
+
+        val userName = AuthUtils.getUserName(requireContext()) ?: "Usuário"
+
+        if (evento.lecturers?.contains(userName) == true) {
+            chipInscrito.visibility = View.VISIBLE
+            btnInscrever.visibility = View.GONE
+        }
+
+        btnInscrever.setOnClickListener {
+            if (evento.seats <= 0) {
+                btnInscrever.isEnabled = false
+                btnInscrever.text = "Evento lotado"
+                return@setOnClickListener
+            }
+
+            Thread {
+                try {
+                    evento.seats -= 1
+
+                    val userName = AuthUtils.getUserName(requireContext()) ?: "Usuário"
+
+                    // Atualiza a string de lecturers
+                    val currentLecturers = evento.lecturers?.split(",")?.map { it.trim() }?.toMutableList() ?: mutableListOf()
+                    if (!currentLecturers.contains(userName)) currentLecturers.add(userName)
+                    evento.lecturers = currentLecturers.joinToString(",")
+
+                    // Cria JSON para envio
+                    val json = JSONObject().apply {
+                        put("seats", evento.seats)
+                        put("lecturers", evento.lecturers)
+                    }
+
+                    // Chama API
+                    val token = AuthUtils.getToken(requireContext())
+                    EventApi.updateEvent(evento.id!!, token, json)
+
+                    requireActivity().runOnUiThread {
+                        chipInscrito.visibility = View.VISIBLE
+                        btnInscrever.visibility = View.GONE
+                    }
+
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                }
+            }.start()
+        }
 
         dialog.setContentView(view)
         dialog.show()

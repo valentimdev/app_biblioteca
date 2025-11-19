@@ -59,4 +59,28 @@ object EventApi {
             connection.disconnect()
         }
     }
+
+    fun updateEvent(eventId: String, token: String?, json: org.json.JSONObject) {
+        val url = URL("${ApiConfig.BASE_URL}events/$eventId")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "PATCH"
+        connection.setRequestProperty("Content-Type", "application/json")
+        token?.let { connection.setRequestProperty("Authorization", "Bearer $it") }
+        connection.doOutput = true
+
+        connection.outputStream.use { os ->
+            os.write(json.toString().toByteArray())
+            os.flush()
+        }
+
+        val responseCode = connection.responseCode
+        if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_NO_CONTENT) {
+            val reader = BufferedReader(InputStreamReader(connection.errorStream))
+            val response = reader.readText()
+            reader.close()
+            throw Exception("Erro ao atualizar evento: $response")
+        }
+
+        connection.disconnect()
+    }
 }

@@ -74,7 +74,6 @@ class MainActivity : AppCompatActivity() {
         toolbar.navigationIcon = null
     }
 
-    // FUNÇÃO QUE ATUALIZA A HOME
     fun refreshHomeFragment() {
         val homeFragment = supportFragmentManager.findFragmentByTag("home") as? HomeFragment
         homeFragment?.reloadHome()

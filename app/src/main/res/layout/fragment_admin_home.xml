@@ -11,7 +11,7 @@
         android:orientation="vertical">
 
         <TextView
-            android:text="Olá, Fulano 👋"
+            android:id="@+id/tvUserGreeting"
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_width="wrap_content"
@@ -92,7 +92,7 @@
                         android:layout_height="wrap_content"/>
 
                     <TextView
-                        android:id="@+id/tvAlunos"
+                        android:id="@+id/tvTotalAlunos"
                         android:text="1.000"
                         android:textSize="24sp"
                         android:textStyle="bold"
@@ -117,36 +117,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp">
 
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_margin="4dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp">
-
-                <LinearLayout
-                    android:padding="16dp"
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:text="Livros Cadastrados"
-                        android:textStyle="bold"
-                        android:textSize="16sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-
-                    <TextView
-                        android:id="@+id/tvLivrosCadastrados"
-                        android:text="Aumento de 12%"
-                        android:textColor="@color/black"
-                        android:textSize="12sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"

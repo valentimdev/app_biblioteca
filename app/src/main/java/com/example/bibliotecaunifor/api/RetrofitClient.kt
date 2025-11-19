@@ -13,7 +13,11 @@ object RetrofitClient {
         token = newToken
     }
 
-    private val okHttpClient: OkHttpClient
+    fun getToken(): String? {
+        return token
+    }
+
+        private val okHttpClient: OkHttpClient
         get() = OkHttpClient.Builder()
             .addInterceptor(TokenInterceptor { token })
             .build()

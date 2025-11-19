@@ -30,12 +30,12 @@ class UsersAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val u = getItem(position)
         with(holder.b) {
-            tvNome.text = u.nome
+            tvNome.text = u.name
             tvMatricula.text = "Matrícula: ${u.matricula}"
             chipStatus.text = u.status.name
 
             // Define a cor do texto de acordo com o status
-            val color = if (u.status == UserStatus.ATIVO) {
+            val color = if (u.status == UserStatus.ACTIVE) {
                 // Use uma cor existente no seu projeto; ajuste se não tiver teal_700
                 ContextCompat.getColor(root.context, R.color.teal_700)
             } else {
