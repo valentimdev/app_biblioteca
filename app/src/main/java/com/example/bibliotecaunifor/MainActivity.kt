@@ -63,7 +63,10 @@ class MainActivity : AppCompatActivity() {
         when (f) {
             is CatalogUserFragment -> toolbar.title = "CATÁLOGO"
             is EventsFragment -> toolbar.title = "EVENTOS"
-            is ChatFragment -> toolbar.title = "CHAT"
+            is ChatFragment -> {
+                supportActionBar?.title = "Biblio Bot"
+                supportActionBar?.setDisplayHomeAsUpEnabled(false)
+            }
             is ProfileFragment -> toolbar.title = "PERFIL"
             else -> toolbar.title = "BibliotecaUnifor"
         }
