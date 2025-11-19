@@ -1,19 +1,30 @@
-    package com.example.bibliotecaunifor.api
+package com.example.bibliotecaunifor.api
 
-    import com.example.bibliotecaunifor.models.EditUserRequest
-    import com.example.bibliotecaunifor.models.UserResponse
-    import retrofit2.Call
-    import retrofit2.http.Body
-    import retrofit2.http.GET
-    import retrofit2.http.PATCH
+import com.example.bibliotecaunifor.models.EditUserRequest
+import com.example.bibliotecaunifor.models.UserResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.Call
+import retrofit2.http.*
 
-    interface UserApi {
+interface UserApi {
 
-        @PATCH("users")
-        fun editUser(
-            @Body request: EditUserRequest
-        ): Call<UserResponse>
+    @PATCH("users")
+    fun editUser(
+        @Body request: EditUserRequest
+    ): Call<UserResponse>
 
-        @GET("users/me")
-        fun getMe(): Call<UserResponse>
-    }
+    @Multipart
+    @PATCH("users")
+    fun editUserMultipart(
+        @Part("name") name: RequestBody?,
+        @Part("email") email: RequestBody?,
+        @Part image: MultipartBody.Part?
+    ): Call<UserResponse>
+
+    @GET("users")
+    fun getAllUsers(@Header("Authorization") token: String): Call<List<UserResponse>>
+
+    @GET("users/me")
+    fun getMe(): Call<UserResponse>
+}

@@ -1,51 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="24dp"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:padding="24dp"
+    android:fillViewport="true"
     android:background="@drawable/bg_rounded_dialog">
 
-    <!-- FOTO DE PERFIL -->
-    <ImageView
-        android:id="@+id/imageViewProfileEdit"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_gravity="center_horizontal"
-        android:scaleType="centerCrop"
-        android:src="@drawable/placeholder_user"
-        android:padding="2dp"
-        android:layout_marginBottom="16dp" />
-
-    <EditText
-        android:id="@+id/editUsername"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nome"
-        android:textColor="@color/unifor_traditional_blue"
-        android:textSize="16sp"
-        android:layout_marginTop="8dp"
-        android:padding="8dp"
-        android:background="@drawable/bg_edittext_rounded"/>
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/editEmail"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Email"
-        android:inputType="textEmailAddress"
-        android:textColor="@color/unifor_traditional_blue"
-        android:textSize="16sp"
-        android:layout_marginTop="12dp"
-        android:padding="8dp"
-        android:background="@drawable/bg_edittext_rounded"/>
+        <ImageView
+            android:id="@+id/imageViewProfileEdit"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center_horizontal"
+            android:scaleType="centerCrop"
+            android:src="@drawable/placeholder_user"
+            android:padding="2dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/placeholder_user"/>
 
-    <Button
-        android:id="@+id/buttonSalvar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Salvar"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="@color/unifor_traditional_blue"
-        android:textColor="@android:color/white"/>
-</LinearLayout>
+        <EditText
+            android:id="@+id/editUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nome"
+            android:textColor="@color/unifor_traditional_blue"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"
+            android:padding="8dp"
+            android:background="@drawable/bg_edittext_rounded"/>
+
+        <EditText
+            android:id="@+id/editEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:textColor="@color/unifor_traditional_blue"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            android:padding="8dp"
+            android:background="@drawable/bg_edittext_rounded"/>
+
+        <Button
+            android:id="@+id/buttonSalvar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Salvar"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/unifor_traditional_blue"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+</ScrollView>

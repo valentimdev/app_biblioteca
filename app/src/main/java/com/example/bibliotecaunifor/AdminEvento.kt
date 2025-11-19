@@ -1,14 +1,18 @@
 package com.example.bibliotecaunifor
 
 data class AdminEvento(
-    val id: String? = null,
-    val nome: String,
-    val local: String,
-    val vagas: Int,
-    val data: String,
-    val horario: String,
-    val endTime: String?,
-    val ativo: Boolean,
-    val description: String? = null,
-    val imageUrl: String? = null
+    val id: String?,
+    val title: String,
+    val description: String?,
+    val startTime: String,
+    val endTime: String,
+    val location: String?,
+    val imageUrl: String?,
+    var lecturers: String?,
+    var seats: Int,
+    val isDisabled: Boolean,
+    val adminId: String,
+    val createdAt: String,
+    val updatedAt: String
 )
+

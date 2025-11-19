@@ -36,7 +36,6 @@ object BookService {
                     description = obj.optString("description"),
                     totalCopies = obj.getInt("totalCopies"),
                     availableCopies = obj.getInt("availableCopies"),
-                    adminId = obj.getString("adminId"),
                     createdAt = obj.getString("createdAt"),
                     updatedAt = obj.getString("updatedAt"),
                     imageUrl = obj.getString("imageUrl")
@@ -122,7 +121,6 @@ object BookService {
                         description = bookObj.optString("description"),
                         totalCopies = bookObj.getInt("totalCopies"),
                         availableCopies = bookObj.getInt("availableCopies"),
-                        adminId = bookObj.getString("adminId"),
                         createdAt = bookObj.getString("createdAt"),
                         updatedAt = bookObj.getString("updatedAt"),
                         imageUrl = bookObj.getString("imageUrl")
@@ -172,7 +170,6 @@ object BookService {
             description = respJson.optString("description"),
             totalCopies = respJson.getInt("totalCopies"),
             availableCopies = respJson.getInt("availableCopies"),
-            adminId = respJson.getString("adminId"),
             createdAt = respJson.getString("createdAt"),
             updatedAt = respJson.getString("updatedAt"),
             imageUrl = respJson.getString("imageUrl")

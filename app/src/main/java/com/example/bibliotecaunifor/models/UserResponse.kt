@@ -1,6 +1,7 @@
 package com.example.bibliotecaunifor.models
 
 import com.example.bibliotecaunifor.Rental
+import com.example.bibliotecaunifor.admin.UserStatus
 
 data class UserResponse(
     val id: String,
@@ -9,6 +10,7 @@ data class UserResponse(
     val matricula: String,
     val imageUrl: String?,
     val role: String,
+    val status: UserStatus?,
     val rentals: List<Rental> = emptyList(),
-    val events: List<EventResponse> = emptyList()
+    val events: List<EventResponse> = emptyList(),
 )

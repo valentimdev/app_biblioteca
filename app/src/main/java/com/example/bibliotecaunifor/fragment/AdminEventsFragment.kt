@@ -61,7 +61,7 @@ class AdminEventsFragment : Fragment() {
             onSwitchChange = { tipo, evento ->
                 if (tipo == "Ativar/Desativar Evento") {
                     val token = AuthUtils.getToken(requireContext())
-                    toggleAtivoEvento(token, evento.id!!, evento.ativo)
+                    toggleAtivoEvento(token, evento.id!!, evento.isDisabled)
                     carregarEventosDoBackend()
                 }
             },
@@ -80,14 +80,14 @@ class AdminEventsFragment : Fragment() {
 
         binding.etBuscarEvento.addTextChangedListener { text ->
             val query = text.toString().lowercase()
-            val filtrados = eventos.filter { it.nome.lowercase().contains(query) }
+            val filtrados = eventos.filter { it.title.lowercase().contains(query) }
             adapter.updateData(filtrados)
         }
     }
 
     private fun mostrarDialogoEvento(evento: AdminEvento) {
         AlertDialog.Builder(requireContext())
-            .setTitle(evento.nome)
+            .setTitle(evento.title)
             .setItems(arrayOf("Editar", "Excluir")) { _, which ->
                 when (which) {
                     0 -> mostrarDialogEditar(evento)
@@ -119,6 +119,17 @@ class AdminEventsFragment : Fragment() {
         return if (partes.size == 3) "${partes[2]}-${partes[1]}-${partes[0]}" else dataBr
     }
 
+    private fun formatarHorarioISO(data: String, horario: String): String {
+        val d = formatarParaISO(data.trim())
+        val h = horario.trim()
+        return "${d}T${h}:00Z"
+    }
+
+    fun obterSeats(edt: android.widget.EditText): Int {
+        val valor = edt.text.toString().trim().toIntOrNull() ?: 1
+        return if (valor < 1) 1 else valor
+    }
+
     private fun mostrarDialogEditar(evento: AdminEvento) {
         selectedImageUri = null
         val dlgView = layoutInflater.inflate(R.layout.dialog_admin_evento, null)
@@ -136,19 +147,19 @@ class AdminEventsFragment : Fragment() {
         imgPreview = dlgView.findViewById(R.id.imgPreview)
         val switchDisabled = dlgView.findViewById<android.widget.Switch>(R.id.switchDisabled)
 
-        edtTitulo.setText(evento.nome)
-        edtLocal.setText(evento.local)
-        edtVagas.setText(evento.vagas.toString())
+        edtTitulo.setText(evento.title)
+        edtLocal.setText(evento.location)
+        edtVagas.setText(evento.seats.toString())
 
-        val startParts = evento.data.split("T")
+        val startParts = evento.startTime.split("T")
         if (startParts.size == 2) {
             val dataIso = startParts[0].split("-")
             if (dataIso.size == 3) edtDataInicio.setText("${dataIso[2]}-${dataIso[1]}-${dataIso[0]}")
             edtHorarioInicio.setText(startParts[1].removeSuffix("Z").substring(0, 5))
         }
 
-        val endParts = evento.endTime?.split("T")
-        if (endParts != null && endParts.size == 2) {
+        val endParts = evento.endTime.split("T")
+        if (endParts.size == 2) {
             val dataIso = endParts[0].split("-")
             if (dataIso.size == 3) edtDataFim.setText("${dataIso[2]}-${dataIso[1]}-${dataIso[0]}")
             edtHorarioFim.setText(endParts[1].removeSuffix("Z").substring(0, 5))
@@ -156,7 +167,7 @@ class AdminEventsFragment : Fragment() {
 
         edtDescricao.setText(evento.description)
         evento.imageUrl?.let { imgPreview?.setImageURI(Uri.parse(it)) }
-        switchDisabled.isChecked = !evento.ativo
+        switchDisabled.isChecked = evento.isDisabled
 
         btnEscolherImagem.setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT)
@@ -169,34 +180,31 @@ class AdminEventsFragment : Fragment() {
             .setView(dlgView)
             .setPositiveButton("Salvar") { d, _ ->
                 val token = AuthUtils.getToken(requireContext())
-                val dataInicioIso = formatarParaISO(edtDataInicio.text.toString())
-                val dataFimIso = formatarParaISO(edtDataFim.text.toString())
-                val startTime = "${dataInicioIso}T${edtHorarioInicio.text}:00Z"
-                val endTime = "${dataFimIso}T${edtHorarioFim.text}:00Z"
-                val imageUrl = selectedImageUri?.toString() ?: evento.imageUrl
-
                 val atualizado = AdminEvento(
                     id = evento.id,
-                    nome = edtTitulo.text.toString().ifBlank { "Evento sem nome" },
-                    local = edtLocal.text.toString(),
-                    vagas = edtVagas.text.toString().toIntOrNull() ?: 0,
-                    data = startTime,
-                    horario = startTime,
-                    endTime = endTime,
-                    ativo = !switchDisabled.isChecked,
+                    title = edtTitulo.text.toString().ifBlank { "Evento sem nome" },
+                    location = edtLocal.text.toString(),
+                    seats = obterSeats(edtVagas),
+                    startTime = formatarHorarioISO(edtDataInicio.text.toString(), edtHorarioInicio.text.toString()),
+                    endTime = formatarHorarioISO(edtDataFim.text.toString(), edtHorarioFim.text.toString()),
+                    isDisabled = switchDisabled.isChecked,
                     description = edtDescricao.text.toString(),
-                    imageUrl = imageUrl
+                    imageUrl = selectedImageUri?.toString() ?: evento.imageUrl,
+                    lecturers = evento.lecturers,
+                    adminId = evento.adminId,
+                    createdAt = evento.createdAt,
+                    updatedAt = evento.updatedAt
                 )
 
                 Thread {
                     try {
                         val json = JSONObject().apply {
-                            put("title", atualizado.nome)
-                            put("location", atualizado.local)
-                            put("seats", atualizado.vagas)
-                            put("startTime", atualizado.data)
+                            put("title", atualizado.title)
+                            put("location", atualizado.location)
+                            put("seats", atualizado.seats)
+                            put("startTime", atualizado.startTime)
                             put("endTime", atualizado.endTime)
-                            put("isDisabled", !atualizado.ativo)
+                            put("isDisabled", atualizado.isDisabled)
                             put("description", atualizado.description)
                             put("image_url", atualizado.imageUrl)
                         }
@@ -240,21 +248,20 @@ class AdminEventsFragment : Fragment() {
             .setView(dlgView)
             .setPositiveButton("Salvar") { d, _ ->
                 val token = AuthUtils.getToken(requireContext())
-                val dataInicioIso = formatarParaISO(edtDataInicio.text.toString())
-                val dataFimIso = formatarParaISO(edtDataFim.text.toString())
-                val startTime = "${dataInicioIso}T${edtHorarioInicio.text}:00Z"
-                val endTime = "${dataFimIso}T${edtHorarioFim.text}:00Z"
-
                 val novo = AdminEvento(
-                    nome = edtTitulo.text.toString().ifBlank { "Evento sem nome" },
-                    local = edtLocal.text.toString(),
-                    vagas = edtVagas.text.toString().toIntOrNull() ?: 0,
-                    data = startTime,
-                    horario = startTime,
-                    endTime = endTime,
-                    ativo = !switchDisabled.isChecked,
+                    id = null,
+                    title = edtTitulo.text.toString().ifBlank { "Evento sem nome" },
+                    location = edtLocal.text.toString(),
+                    seats = obterSeats(edtVagas),
+                    startTime = formatarHorarioISO(edtDataInicio.text.toString(), edtHorarioInicio.text.toString()),
+                    endTime = formatarHorarioISO(edtDataFim.text.toString(), edtHorarioFim.text.toString()),
+                    isDisabled = switchDisabled.isChecked,
                     description = edtDescricao.text.toString(),
-                    imageUrl = selectedImageUri?.toString()
+                    imageUrl = selectedImageUri?.toString(),
+                    lecturers = null,
+                    adminId = "",
+                    createdAt = "",
+                    updatedAt = ""
                 )
 
                 Thread {
@@ -279,7 +286,7 @@ class AdminEventsFragment : Fragment() {
         val token = AuthUtils.getToken(requireContext())
         AlertDialog.Builder(requireContext())
             .setTitle("Excluir evento")
-            .setMessage("Deseja realmente excluir o evento ${evento.nome}?")
+            .setMessage("Deseja realmente excluir o evento ${evento.title}?")
             .setPositiveButton("SIM") { dialog, _ ->
                 Thread {
                     if (evento.id == null) return@Thread
@@ -306,15 +313,18 @@ class AdminEventsFragment : Fragment() {
                 if (!it.isDisabled || role == "ADMIN") {
                     AdminEvento(
                         id = eventId,
-                        nome = it.title,
-                        local = it.location,
-                        vagas = it.seats ?: 0,
-                        data = it.startTime,
-                        horario = it.startTime,
+                        title = it.title,
+                        location = it.location,
+                        seats = it.seats ?: 1,
+                        startTime = it.startTime,
                         endTime = it.endTime ?: it.startTime,
-                        ativo = !it.isDisabled,
+                        isDisabled = it.isDisabled,
                         description = it.description,
-                        imageUrl = it.imageUrl
+                        imageUrl = it.imageUrl,
+                        lecturers = it.lecturers,
+                        adminId = "",
+                        createdAt = "",
+                        updatedAt = ""
                     )
                 } else null
             }
@@ -347,8 +357,8 @@ class AdminEventsFragment : Fragment() {
 
     private fun aplicarFiltros() {
         var filtrados = eventos.toList()
-        if (filtroData) filtrados = filtrados.sortedBy { it.data }
-        if (filtroAlfabetico) filtrados = filtrados.sortedBy { it.nome }
+        if (filtroData) filtrados = filtrados.sortedBy { it.startTime }
+        if (filtroAlfabetico) filtrados = filtrados.sortedBy { it.title }
         adapter.updateData(filtrados)
     }
 

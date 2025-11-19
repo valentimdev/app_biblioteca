@@ -53,14 +53,18 @@ object EventService {
         conn.doOutput = true
 
         val json = JSONObject().apply {
-            put("title", evento.nome)
-            put("location", evento.local)
-            put("seats", evento.vagas)
-            put("startTime", evento.data)
+            put("title", evento.title)
+            put("location", evento.location)
+            put("seats", evento.seats)
+            put("startTime", evento.startTime)
             put("endTime", evento.endTime)
-            put("isDisabled", !evento.ativo)
+            put("isDisabled", evento.isDisabled)
             put("description", evento.description ?: "")
             put("image_url", evento.imageUrl ?: "")
+            put("lecturers", evento.lecturers ?: "")
+            put("adminId", evento.adminId)
+            put("createdAt", evento.createdAt)
+            put("updatedAt", evento.updatedAt)
         }
 
         conn.outputStream.use { it.write(json.toString().toByteArray()) }
@@ -75,15 +79,18 @@ object EventService {
 
         return AdminEvento(
             id = respJson.getString("id"),
-            nome = respJson.getString("title"),
-            local = respJson.getString("location"),
-            vagas = respJson.getInt("seats"),
-            data = respJson.getString("startTime"),
+            title = respJson.getString("title"),
+            location = respJson.getString("location"),
+            seats = respJson.getInt("seats"),
+            startTime = respJson.getString("startTime"),
             endTime = respJson.getString("endTime"),
-            horario = respJson.getString("startTime"),
-            ativo = !respJson.getBoolean("isDisabled"),
+            isDisabled = respJson.getBoolean("isDisabled"),
             description = respJson.optString("description", null),
-            imageUrl = respJson.optString("image_url", null)
+            imageUrl = respJson.optString("image_url", null),
+            lecturers = respJson.optString("lecturers", null),
+            adminId = respJson.optString("adminId", ""),
+            createdAt = respJson.optString("createdAt", ""),
+            updatedAt = respJson.optString("updatedAt", "")
         )
     }
 

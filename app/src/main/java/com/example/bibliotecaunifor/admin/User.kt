@@ -6,5 +6,6 @@ data class User(
     val email: String,
     val matricula: String,
     val role: String,
-    val imageUrl: String? = null
+    val imageUrl: String?,
+    val status: UserStatus
 )
