@@ -18,7 +18,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var bottom: BottomNavigationView
 
-    private var currentFragment: Fragment? = null
+    private lateinit var homeFragment: HomeFragment
+    private lateinit var catalogFragment: CatalogUserFragment
+    private lateinit var eventsFragment: EventsFragment
+    private lateinit var chatFragment: ChatFragment
+    private lateinit var profileFragment: ProfileFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,29 +36,50 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
-        // tela inicial (Home)
+        homeFragment = HomeFragment()
+        catalogFragment = CatalogUserFragment()
+        eventsFragment = EventsFragment()
+        chatFragment = ChatFragment()
+        profileFragment = ProfileFragment()
+
         if (savedInstanceState == null) {
-            switchTo(HomeFragment(), "home")
+            supportFragmentManager.beginTransaction()
+                .add(R.id.fragment_container, homeFragment, "home")
+                .commit()
             bottom.selectedItemId = R.id.nav_home
+            configureToolbarFor(homeFragment)
         }
 
         bottom.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> switchTo(HomeFragment(), "home")
-                R.id.nav_catalog -> switchTo(CatalogUserFragment(), "catalog")
-                R.id.nav_events -> switchTo(EventsFragment(), "events")
-                R.id.nav_chat -> switchTo(ChatFragment(), "chat")
-                R.id.nav_profile -> switchTo(ProfileFragment(), "profile")
+                R.id.nav_home -> switchTo(homeFragment, "home")
+                R.id.nav_catalog -> switchTo(catalogFragment, "catalog")
+                R.id.nav_events -> switchTo(eventsFragment, "events")
+                R.id.nav_chat -> switchTo(chatFragment, "chat")
+                R.id.nav_profile -> switchTo(profileFragment, "profile")
             }
             true
         }
     }
 
     private fun switchTo(fragment: Fragment, tag: String) {
-        currentFragment = fragment
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment, tag)
-            .commit()
+        val fm = supportFragmentManager
+        val transaction = fm.beginTransaction()
+
+        val existing = fm.findFragmentByTag(tag)
+        if (existing == null) {
+            transaction.add(R.id.fragment_container, fragment, tag)
+        }
+
+        fm.fragments.forEach { f ->
+            if (f.tag == tag) {
+                transaction.show(f)
+            } else {
+                transaction.hide(f)
+            }
+        }
+
+        transaction.commit()
         configureToolbarFor(fragment)
     }
 
@@ -75,7 +100,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun refreshHomeFragment() {
-        val homeFragment = supportFragmentManager.findFragmentByTag("home") as? HomeFragment
-        homeFragment?.reloadHome()
+        val home = supportFragmentManager.findFragmentByTag("home") as? HomeFragment
+        home?.reloadHome()
     }
 }

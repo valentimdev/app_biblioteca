@@ -2,7 +2,6 @@ package com.example.bibliotecaunifor.fragment
 
 import com.example.bibliotecaunifor.models.EventResponse
 import android.os.Bundle
-import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -14,12 +13,12 @@ import com.example.bibliotecaunifor.adapters.RecommendationsAdapter
 import com.example.bibliotecaunifor.api.RetrofitClient
 import com.example.bibliotecaunifor.models.UserResponse
 import com.example.bibliotecaunifor.utils.AuthUtils
+import com.example.bibliotecaunifor.api.EventApi
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.mapNotNull
 
 class HomeFragment : Fragment() {
 
@@ -38,10 +37,9 @@ class HomeFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         bindViews(view)
         setupRecyclerView()
-
-        loadUserData()        // pega /users/me -> nome, empréstimos, eventos
-        loadRecommendations() // pega livros recomendados (passando token)
-
+        loadUserData()
+        loadRecommendations()
+        loadEvents()
         return view
     }
 
@@ -59,9 +57,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    // ============================================================
-    // 1) Carrega /users/me → Nome, Empréstimos, Eventos
-    // ============================================================
     private fun loadUserData() {
         userApi.getMe().enqueue(object : Callback<UserResponse> {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
@@ -69,16 +64,9 @@ class HomeFragment : Fragment() {
                     showError("Erro ao carregar usuário", response.code())
                     return
                 }
-
-                val user = response.body() ?: run {
-                    showError("Corpo de usuário vazio")
-                    return
-                }
-
-                Log.d("HomeFragment", "User recebido: ${user.name}")
+                val user = response.body() ?: return showError("Corpo de usuário vazio")
                 txtWelcome.text = "Olá ${user.name}, bem-vindo!"
                 populateLoans(user.rentals)
-                populateEvents(user.events)
             }
 
             override fun onFailure(call: Call<UserResponse>, t: Throwable) {
@@ -87,9 +75,38 @@ class HomeFragment : Fragment() {
         })
     }
 
+    private fun loadEvents() {
+        Thread {
+            val eventos = EventApi.fetchEventos()
+
+            val mapped = eventos.map {
+                EventResponse(
+                    id = it.id,
+                    title = it.title,
+                    description = it.description,
+                    startTime = it.startTime,
+                    endTime = it.endTime,
+                    location = it.location ?: "",
+                    imageUrl = it.imageUrl,
+                    lecturers = it.lecturers,
+                    seats = it.seats,
+                    isDisabled = it.isDisabled,
+                    adminId = it.adminId,
+                    createdAt = it.createdAt,
+                    updatedAt = it.updatedAt
+                )
+            }
+
+            activity?.runOnUiThread {
+                populateEvents(mapped)
+            }
+        }.start()
+    }
+
     fun reloadHome() {
         loadUserData()
         loadRecommendations()
+        loadEvents()
     }
 
     private fun populateLoans(rentals: List<Rental>) {
@@ -121,12 +138,8 @@ class HomeFragment : Fragment() {
             .show()
     }
 
-    // ============================================================
-    // 3) returnBook -> chama bookApi.returnBook(bookId, token)
-    // ============================================================
     private fun returnBook(bookId: String) {
         val token = getAuthToken() ?: return showError("Faça login para devolver livro")
-        // token já tem o prefixo "Bearer " conforme sua função getAuthToken()
         bookApi.returnBook(bookId, token).enqueue(object : Callback<Map<String, Boolean>> {
             override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) {
                 if (response.isSuccessful && response.body()?.get("success") == true) {
@@ -143,76 +156,70 @@ class HomeFragment : Fragment() {
         })
     }
 
-    // ============================================================
-    // 4) Próximos Eventos (recebidos via /users/me)
-    // ============================================================
     private fun populateEvents(events: List<EventResponse>) {
         if (events.isEmpty()) {
             txtNextEvents.text = "Nenhum evento próximo"
             return
         }
 
-        val upcoming = events
-            .mapNotNull { ev -> parseDate(ev.startTime)?.let { ev to it.time } }
+        val proximos = events
+            .mapNotNull { ev ->
+                parseDate(ev.startTime)?.let { date -> ev to date.time }
+            }
             .filter { it.second > System.currentTimeMillis() }
             .sortedBy { it.second }
-            .take(3)
+            .take(2)
 
-        if (upcoming.isEmpty()) {
+        if (proximos.isEmpty()) {
             txtNextEvents.text = "Nenhum evento próximo"
             return
         }
 
-        txtNextEvents.text = upcoming.joinToString("\n") { (ev, ts) ->
-            "${ev.title} - ${formatDateTime(ts)}"
+        val texto = proximos.joinToString("\n\n") { (ev, ts) ->
+            "${ev.title}\n${formatDateTime(ts)}"
         }
+
+        txtNextEvents.text = texto
     }
 
-    // ============================================================
-    // 5) Recomendações (passando token se bookApi exigir)
-    // ============================================================
     private fun loadRecommendations() {
-        val token = getAuthToken() ?: return // se precisar do token, força login
+        val token = getAuthToken() ?: return
         bookApi.getBooks(token).enqueue(object : Callback<List<Book>> {
             override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
-                if (!response.isSuccessful) {
-                    Log.e("HomeFragment", "Recomendações erro HTTP ${response.code()}")
-                    return
-                }
+                if (!response.isSuccessful) return
                 val books = response.body() ?: emptyList()
                 val recommendations = books.filter { it.availableCopies > 0 }.shuffled().take(5)
                 (rvRecommendations.adapter as? RecommendationsAdapter)?.updateBooks(recommendations)
             }
 
-            override fun onFailure(call: Call<List<Book>>, t: Throwable) {
-                Log.e("HomeFragment", "Erro recomendação: ${t.message}")
-            }
+            override fun onFailure(call: Call<List<Book>>, t: Throwable) {}
         })
     }
 
-    // ============================================================
-    // UTIL
-    // ============================================================
     private fun getAuthToken(): String? {
         val ctx = context ?: return null
-        val token = AuthUtils.getToken(ctx) // retorna token puro, ex "eyJ..."
+        val token = AuthUtils.getToken(ctx)
         return if (token != null) "Bearer $token" else null
     }
 
     private fun parseDate(iso: String): Date? {
-        return try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-            sdf.timeZone = TimeZone.getTimeZone("UTC")
-            sdf.parse(iso)
-        } catch (e: Exception) {
+        val formats = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+        )
+
+        formats.forEach { pattern ->
             try {
-                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+                val sdf = SimpleDateFormat(pattern, Locale.getDefault())
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
-                sdf.parse(iso)
-            } catch (e: Exception) {
-                null
-            }
+                return sdf.parse(iso)
+            } catch (_: Exception) {}
         }
+        return null
     }
 
     private fun formatDate(iso: String): String {
