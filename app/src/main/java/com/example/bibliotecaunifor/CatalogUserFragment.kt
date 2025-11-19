@@ -14,6 +14,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import com.example.bibliotecaunifor.R
 
 class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
 
@@ -31,9 +32,9 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
         rvBooks.layoutManager = LinearLayoutManager(requireContext())
         adapter = BookAdapter(allBooks, false) { action, book ->
             if (action == "detail") {
-                parentFragmentManager.beginTransaction()
+                requireActivity().supportFragmentManager.beginTransaction()
                     .replace(R.id.fragment_container, BookDetailFragment.newInstance(book, false))
-                    .addToBackStack(null)
+                    .addToBackStack("book_detail")
                     .commit()
             }
         }
