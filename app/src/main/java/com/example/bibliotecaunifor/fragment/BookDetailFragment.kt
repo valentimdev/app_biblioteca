@@ -1,5 +1,4 @@
-// BookDetailFragment.kt
-package com.example.bibliotecaunifor.ui.book
+package com.example.bibliotecaunifor.fragment
 
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
@@ -41,7 +40,6 @@ class BookDetailFragment : Fragment() {
                 putString("description", book.description ?: "")
                 putInt("totalCopies", book.totalCopies)
                 putInt("availableCopies", book.availableCopies)
-                putString("adminId", book.adminId)
                 putBoolean("isAdmin", isAdmin)
             }
             frag.arguments = args
@@ -62,7 +60,7 @@ class BookDetailFragment : Fragment() {
                 description = it.getString("description"),
                 totalCopies = it.getInt("totalCopies"),
                 availableCopies = it.getInt("availableCopies"),
-                adminId = it.getString("adminId") ?: ""
+                imageUrl = it.getString("imageUrl")
             )
             isAdmin = it.getBoolean("isAdmin", false)
         }
@@ -79,8 +77,7 @@ class BookDetailFragment : Fragment() {
         view.findViewById<TextView>(R.id.txtAuthor).text = "Autor: ${book.author}"
         view.findViewById<TextView>(R.id.txtIsbn).text = "ISBN: ${book.isbn ?: "-"}"
         view.findViewById<TextView>(R.id.txtDescription).text = "Descrição: ${book.description ?: "-"}"
-        view.findViewById<TextView>(R.id.txtTotalCopies).text =
-            "Cópias: ${book.availableCopies} / ${book.totalCopies} disponíveis"
+        view.findViewById<TextView>(R.id.txtTotalCopies).text = "Cópias: ${book.availableCopies} / ${book.totalCopies} disponíveis"
 
         val btnAction = view.findViewById<Button>(R.id.btnAction)
 

@@ -37,8 +37,9 @@ object BookService {
                     totalCopies = obj.getInt("totalCopies"),
                     availableCopies = obj.getInt("availableCopies"),
                     adminId = obj.getString("adminId"),
-                    createdAt = TODO(),
-                    updatedAt = TODO()
+                    createdAt = obj.getString("createdAt"),
+                    updatedAt = obj.getString("updatedAt"),
+                    imageUrl = obj.getString("imageUrl")
                 ))
             }
         } else {
@@ -122,8 +123,9 @@ object BookService {
                         totalCopies = bookObj.getInt("totalCopies"),
                         availableCopies = bookObj.getInt("availableCopies"),
                         adminId = bookObj.getString("adminId"),
-                        createdAt = TODO(),
-                        updatedAt = TODO()
+                        createdAt = bookObj.getString("createdAt"),
+                        updatedAt = bookObj.getString("updatedAt"),
+                        imageUrl = bookObj.getString("imageUrl")
                     )
                 ))
             }
@@ -171,8 +173,9 @@ object BookService {
             totalCopies = respJson.getInt("totalCopies"),
             availableCopies = respJson.getInt("availableCopies"),
             adminId = respJson.getString("adminId"),
-            createdAt = TODO(),
-            updatedAt = TODO()
+            createdAt = respJson.getString("createdAt"),
+            updatedAt = respJson.getString("updatedAt"),
+            imageUrl = respJson.getString("imageUrl")
         )
     }
 

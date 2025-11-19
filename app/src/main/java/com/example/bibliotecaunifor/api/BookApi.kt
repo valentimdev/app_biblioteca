@@ -1,9 +1,10 @@
 package com.example.bibliotecaunifor.api
 
 import com.example.bibliotecaunifor.Book
-import com.example.bibliotecaunifor.models.CreateBookDto
 import com.example.bibliotecaunifor.models.EditBookDto
 import com.example.bibliotecaunifor.Rental
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Call
 import retrofit2.http.*
 
@@ -13,11 +14,13 @@ interface BookApi {
 
     @GET("books")
     fun getBooks(@Header("Authorization") token: String): Call<List<Book>>
+
     @GET("books/{id}")
     fun getBookById(
         @Path("id") id: String,
         @Header("Authorization") token: String
     ): Call<Book>
+
     @POST("books/{id}/rent")
     fun rentBook(
         @Path("id") bookId: String,
@@ -36,9 +39,15 @@ interface BookApi {
 
     // ====== ADMIN ======
 
+    @Multipart
     @POST("books")
     fun createBook(
-        @Body dto: CreateBookDto,
+        @Part("title") title: RequestBody,
+        @Part("author") author: RequestBody,
+        @Part("isbn") isbn: RequestBody,
+        @Part("description") description: RequestBody,
+        @Part("totalCopies") totalCopies: RequestBody,
+        @Part image: MultipartBody.Part?,
         @Header("Authorization") token: String
     ): Call<Book>
 
