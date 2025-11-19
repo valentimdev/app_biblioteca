@@ -6,7 +6,7 @@ data class EventResponse(
     val description: String?,
     val startTime: String,
     val endTime: String?,
-    val location: String,
+    val location: String?,
     val imageUrl: String?,
     val lecturers: String?,
     val seats: Int?,
