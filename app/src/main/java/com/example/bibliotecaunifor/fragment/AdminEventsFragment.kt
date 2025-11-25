@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,15 +14,18 @@ import android.widget.ImageView
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
+import com.bumptech.glide.Glide
 import com.example.bibliotecaunifor.AdminEvento
 import com.example.bibliotecaunifor.MainActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.AdminEventosAdapter
 import com.example.bibliotecaunifor.databinding.FragmentAdminEventosBinding
-import com.example.bibliotecaunifor.services.EventService
-import com.example.bibliotecaunifor.services.EventService.toggleAtivoEvento
+import com.example.bibliotecaunifor.api.EventService
 import com.example.bibliotecaunifor.utils.AuthUtils
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class AdminEventsFragment : Fragment() {
 
@@ -33,8 +37,6 @@ class AdminEventsFragment : Fragment() {
 
     private var filtroData = false
     private var filtroAlfabetico = false
-    private var filtroEncerrados = false
-    private var filtroAbertos = false
 
     private var selectedImageUri: Uri? = null
     private var imgPreview: ImageView? = null
@@ -57,13 +59,12 @@ class AdminEventsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = AdminEventosAdapter(
+            requireContext(),
             eventos,
-            onSwitchChange = { tipo, evento ->
-                if (tipo == "Ativar/Desativar Evento") {
-                    val token = AuthUtils.getToken(requireContext())
-                    toggleAtivoEvento(token, evento.id!!, evento.isDisabled)
-                    carregarEventosDoBackend()
-                }
+            onSwitchChange = { _, evento ->
+                val token = AuthUtils.getToken(requireContext())
+                EventService.toggleAtivoEvento(token, evento.id, evento.isDisabled)
+                carregarEventosDoBackend()
             },
             onItemClick = { evento ->
                 mostrarDialogoEvento(evento)
@@ -114,20 +115,35 @@ class AdminEventsFragment : Fragment() {
         }
     }
 
-    private fun formatarParaISO(dataBr: String): String {
-        val partes = dataBr.split("-")
-        return if (partes.size == 3) "${partes[2]}-${partes[1]}-${partes[0]}" else dataBr
+    private fun aplicarMascaraHorario(editText: android.widget.EditText) {
+        var isUpdating = false
+        editText.addTextChangedListener {
+            if (isUpdating) return@addTextChangedListener
+            val str = it.toString().replace(":", "").take(4)
+            val formatted = buildString {
+                for (i in str.indices) {
+                    if (i == 2) append(":")
+                    append(str[i])
+                }
+            }
+            isUpdating = true
+            editText.setText(formatted)
+            editText.setSelection(formatted.length)
+            isUpdating = false
+        }
     }
 
-    private fun formatarHorarioISO(data: String, horario: String): String {
-        val d = formatarParaISO(data.trim())
-        val h = horario.trim()
-        return "${d}T${h}:00Z"
+    private fun formatarISO(d: String, h: String): String {
+        val inFmt = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault())
+        inFmt.timeZone = TimeZone.getTimeZone("UTC")
+        val outFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        outFmt.timeZone = TimeZone.getTimeZone("UTC")
+        val date = inFmt.parse("$d $h")
+        return outFmt.format(date!!)
     }
 
     fun obterSeats(edt: android.widget.EditText): Int {
-        val valor = edt.text.toString().trim().toIntOrNull() ?: 1
-        return if (valor < 1) 1 else valor
+        return edt.text.toString().trim().toIntOrNull()?.coerceAtLeast(1) ?: 1
     }
 
     private fun mostrarDialogEditar(evento: AdminEvento) {
@@ -140,83 +156,93 @@ class AdminEventsFragment : Fragment() {
         val edtHorarioInicio = dlgView.findViewById<android.widget.EditText>(R.id.edtHorarioInicio)
         val edtDataFim = dlgView.findViewById<android.widget.EditText>(R.id.edtDataFim)
         val edtHorarioFim = dlgView.findViewById<android.widget.EditText>(R.id.edtHorarioFim)
-        aplicarMascaraData(edtDataInicio)
-        aplicarMascaraData(edtDataFim)
         val edtDescricao = dlgView.findViewById<android.widget.EditText>(R.id.edtDescricao)
         val btnEscolherImagem = dlgView.findViewById<Button>(R.id.btnEscolherImagem)
         imgPreview = dlgView.findViewById(R.id.imgPreview)
         val switchDisabled = dlgView.findViewById<android.widget.Switch>(R.id.switchDisabled)
 
+        aplicarMascaraData(edtDataInicio)
+        aplicarMascaraData(edtDataFim)
+        aplicarMascaraHorario(edtHorarioInicio)
+        aplicarMascaraHorario(edtHorarioFim)
+
         edtTitulo.setText(evento.title)
         edtLocal.setText(evento.location)
         edtVagas.setText(evento.seats.toString())
 
-        val startParts = evento.startTime.split("T")
-        if (startParts.size == 2) {
-            val dataIso = startParts[0].split("-")
-            if (dataIso.size == 3) edtDataInicio.setText("${dataIso[2]}-${dataIso[1]}-${dataIso[0]}")
-            edtHorarioInicio.setText(startParts[1].removeSuffix("Z").substring(0, 5))
+        evento.eventStartTime.split("T").let {
+            val d = it[0].split("-")
+            edtDataInicio.setText("${d[2]}-${d[1]}-${d[0]}")
+            edtHorarioInicio.setText(it[1].removeSuffix("Z").substring(0, 5))
         }
 
-        val endParts = evento.endTime.split("T")
-        if (endParts.size == 2) {
-            val dataIso = endParts[0].split("-")
-            if (dataIso.size == 3) edtDataFim.setText("${dataIso[2]}-${dataIso[1]}-${dataIso[0]}")
-            edtHorarioFim.setText(endParts[1].removeSuffix("Z").substring(0, 5))
+        evento.eventEndTime?.split("T")?.let {
+            val d = it[0].split("-")
+            edtDataFim.setText("${d[2]}-${d[1]}-${d[0]}")
+            edtHorarioFim.setText(it[1].removeSuffix("Z").substring(0, 5))
         }
 
         edtDescricao.setText(evento.description)
-        evento.imageUrl?.let { imgPreview?.setImageURI(Uri.parse(it)) }
+        evento.imageUrl?.let { url ->
+            Glide.with(requireContext())
+                .load(url)
+                .into(imgPreview!!)
+        }
         switchDisabled.isChecked = evento.isDisabled
 
         btnEscolherImagem.setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT)
             intent.type = "image/*"
-            startActivityForResult(Intent.createChooser(intent, "Escolher imagem"), REQUEST_IMAGE)
+            startActivityForResult(intent, REQUEST_IMAGE)
         }
 
         AlertDialog.Builder(requireContext())
             .setTitle("Editar evento")
             .setView(dlgView)
-            .setPositiveButton("Salvar") { d, _ ->
+            .setPositiveButton("Salvar") { dialog, _ ->
+
+                val eventStartISO = formatarISO(edtDataInicio.text.toString(), edtHorarioInicio.text.toString())
+                val eventEndISO = formatarISO(edtDataFim.text.toString(), edtHorarioFim.text.toString())
+
+                val dto = JSONObject().apply {
+                    put("title", edtTitulo.text.toString())
+                    put("description", edtDescricao.text.toString())
+                    put("location", edtLocal.text.toString())
+                    put("eventStartTime", eventStartISO)
+                    put("eventEndTime", eventEndISO)
+
+                    put(
+                        "registrationStartTime",
+                        if (evento.registrationStartTime.isNullOrBlank() || evento.registrationStartTime == "null")
+                            JSONObject.NULL
+                        else evento.registrationStartTime
+                    )
+
+                    put(
+                        "registrationEndTime",
+                        if (evento.registrationEndTime.isNullOrBlank() || evento.registrationEndTime == "null")
+                            JSONObject.NULL
+                        else evento.registrationEndTime
+                    )
+
+                    put("seats", obterSeats(edtVagas))
+                    put("isDisabled", switchDisabled.isChecked)
+
+                    put("lecturers",
+                        evento.lecturers ?: JSONObject.NULL
+                    )
+                    put("isFull", evento.isFull)
+                }
+                Log.i("UPDATE_EVENT_JSON", dto.toString())
                 val token = AuthUtils.getToken(requireContext())
-                val atualizado = AdminEvento(
-                    id = evento.id,
-                    title = edtTitulo.text.toString().ifBlank { "Evento sem nome" },
-                    location = edtLocal.text.toString(),
-                    seats = obterSeats(edtVagas),
-                    startTime = formatarHorarioISO(edtDataInicio.text.toString(), edtHorarioInicio.text.toString()),
-                    endTime = formatarHorarioISO(edtDataFim.text.toString(), edtHorarioFim.text.toString()),
-                    isDisabled = switchDisabled.isChecked,
-                    description = edtDescricao.text.toString(),
-                    imageUrl = selectedImageUri?.toString() ?: evento.imageUrl,
-                    lecturers = evento.lecturers,
-                    adminId = evento.adminId,
-                    createdAt = evento.createdAt,
-                    updatedAt = evento.updatedAt
-                )
 
                 Thread {
-                    try {
-                        val json = JSONObject().apply {
-                            put("title", atualizado.title)
-                            put("location", atualizado.location)
-                            put("seats", atualizado.seats)
-                            put("startTime", atualizado.startTime)
-                            put("endTime", atualizado.endTime)
-                            put("isDisabled", atualizado.isDisabled)
-                            put("description", atualizado.description)
-                            put("image_url", atualizado.imageUrl)
-                        }
-                        EventService.updateEvent(token, atualizado.id!!, json)
-                        carregarEventosDoBackend()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    EventService.updateEvent(token, evento.id, dto)
+                    carregarEventosDoBackend()
                 }.start()
-                d.dismiss()
-            }
-            .setNegativeButton("Cancelar", null)
+
+                dialog.dismiss()
+            }            .setNegativeButton("Cancelar", null)
             .show()
     }
 
@@ -230,45 +256,59 @@ class AdminEventsFragment : Fragment() {
         val edtHorarioInicio = dlgView.findViewById<android.widget.EditText>(R.id.edtHorarioInicio)
         val edtDataFim = dlgView.findViewById<android.widget.EditText>(R.id.edtDataFim)
         val edtHorarioFim = dlgView.findViewById<android.widget.EditText>(R.id.edtHorarioFim)
-        aplicarMascaraData(edtDataInicio)
-        aplicarMascaraData(edtDataFim)
         val edtDescricao = dlgView.findViewById<android.widget.EditText>(R.id.edtDescricao)
         val btnEscolherImagem = dlgView.findViewById<Button>(R.id.btnEscolherImagem)
         imgPreview = dlgView.findViewById(R.id.imgPreview)
         val switchDisabled = dlgView.findViewById<android.widget.Switch>(R.id.switchDisabled)
 
+        aplicarMascaraData(edtDataInicio)
+        aplicarMascaraData(edtDataFim)
+        aplicarMascaraHorario(edtHorarioInicio)
+        aplicarMascaraHorario(edtHorarioFim)
+
         btnEscolherImagem.setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT)
             intent.type = "image/*"
-            startActivityForResult(Intent.createChooser(intent, "Escolher imagem"), REQUEST_IMAGE)
+            startActivityForResult(intent, REQUEST_IMAGE)
         }
 
         AlertDialog.Builder(requireContext())
             .setTitle("Novo evento")
             .setView(dlgView)
-            .setPositiveButton("Salvar") { d, _ ->
-                val token = AuthUtils.getToken(requireContext())
+            .setPositiveButton("Salvar") { dialog, _ ->
+
+                val eventStartISO = formatarISO(edtDataInicio.text.toString(), edtHorarioInicio.text.toString())
+                val eventEndISO = formatarISO(edtDataFim.text.toString(), edtHorarioFim.text.toString())
+
                 val novo = AdminEvento(
-                    id = null,
-                    title = edtTitulo.text.toString().ifBlank { "Evento sem nome" },
-                    location = edtLocal.text.toString(),
-                    seats = obterSeats(edtVagas),
-                    startTime = formatarHorarioISO(edtDataInicio.text.toString(), edtHorarioInicio.text.toString()),
-                    endTime = formatarHorarioISO(edtDataFim.text.toString(), edtHorarioFim.text.toString()),
-                    isDisabled = switchDisabled.isChecked,
+                    id = "",
+                    title = edtTitulo.text.toString(),
                     description = edtDescricao.text.toString(),
+                    registrationStartTime = null,
+                    registrationEndTime = null,
+                    eventStartTime = eventStartISO,
+                    eventEndTime = eventEndISO,
+                    startTime = null,
+                    endTime = null,
+                    location = edtLocal.text.toString(),
                     imageUrl = selectedImageUri?.toString(),
                     lecturers = null,
-                    adminId = "",
-                    createdAt = "",
-                    updatedAt = ""
+                    seats = obterSeats(edtVagas),
+                    isDisabled = switchDisabled.isChecked,
+                    isFull = false,
+                    adminId = null,
+                    createdAt = null,
+                    updatedAt = null
                 )
 
+                val token = AuthUtils.getToken(requireContext())
+
                 Thread {
-                    EventService.createEvent(token, novo)
+                    EventService.createEvent(requireContext(), token, novo, selectedImageUri)
                     carregarEventosDoBackend()
                 }.start()
-                d.dismiss()
+
+                dialog.dismiss()
             }
             .setNegativeButton("Cancelar", null)
             .show()
@@ -289,13 +329,8 @@ class AdminEventsFragment : Fragment() {
             .setMessage("Deseja realmente excluir o evento ${evento.title}?")
             .setPositiveButton("SIM") { dialog, _ ->
                 Thread {
-                    if (evento.id == null) return@Thread
-                    try {
-                        EventService.deleteEvent(token, evento.id)
-                        carregarEventosDoBackend()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    EventService.deleteEvent(token, evento.id)
+                    carregarEventosDoBackend()
                 }.start()
                 dialog.dismiss()
             }
@@ -305,29 +340,31 @@ class AdminEventsFragment : Fragment() {
 
     private fun carregarEventosDoBackend() {
         val token = AuthUtils.getToken(requireContext())
-        val role = AuthUtils.getRole(requireContext())
+
         Thread {
-            val eventosDto = EventService.getAllEvents(token)
-            val lista = eventosDto.mapNotNull {
-                val eventId = it.id ?: return@mapNotNull null
-                if (!it.isDisabled || role == "ADMIN") {
-                    AdminEvento(
-                        id = eventId,
-                        title = it.title,
-                        location = it.location,
-                        seats = it.seats ?: 1,
-                        startTime = it.startTime,
-                        endTime = it.endTime ?: it.startTime,
-                        isDisabled = it.isDisabled,
-                        description = it.description,
-                        imageUrl = it.imageUrl,
-                        lecturers = it.lecturers,
-                        adminId = "",
-                        createdAt = "",
-                        updatedAt = ""
-                    )
-                } else null
+            val lista = EventService.getAllEvents(token).map {
+                AdminEvento(
+                    id = it.id ?: "",
+                    title = it.title,
+                    description = it.description,
+                    registrationStartTime = it.registrationStartTime,
+                    registrationEndTime = it.registrationEndTime,
+                    eventStartTime = it.eventStartTime,
+                    eventEndTime = it.eventEndTime,
+                    startTime = it.startTime,
+                    endTime = it.endTime,
+                    location = it.location,
+                    imageUrl = it.imageUrl,
+                    lecturers = it.lecturers,
+                    seats = it.seats ?: 0,
+                    isDisabled = it.isDisabled,
+                    isFull = it.isFull,
+                    adminId = it.adminId ?: "",
+                    createdAt = it.createdAt,
+                    updatedAt = it.updatedAt
+                )
             }
+
             requireActivity().runOnUiThread {
                 eventos.clear()
                 eventos.addAll(lista)
@@ -337,18 +374,17 @@ class AdminEventsFragment : Fragment() {
     }
 
     private fun mostrarDialogoFiltros() {
-        val items = arrayOf("Filtrar por data", "Ordem alfabética", "Encerrados", "Abertos")
-        val checkedItems = booleanArrayOf(filtroData, filtroAlfabetico, filtroEncerrados, filtroAbertos)
+        val items = arrayOf("Filtrar por data", "Ordem alfabética")
+        val checked = booleanArrayOf(filtroData, filtroAlfabetico)
+
         AlertDialog.Builder(requireContext())
             .setTitle("Filtrar eventos")
-            .setMultiChoiceItems(items, checkedItems) { _, which, isChecked ->
-                checkedItems[which] = isChecked
+            .setMultiChoiceItems(items, checked) { _, which, isChecked ->
+                checked[which] = isChecked
             }
             .setPositiveButton("Aplicar") { _, _ ->
-                filtroData = checkedItems[0]
-                filtroAlfabetico = checkedItems[1]
-                filtroEncerrados = checkedItems[2]
-                filtroAbertos = checkedItems[3]
+                filtroData = checked[0]
+                filtroAlfabetico = checked[1]
                 aplicarFiltros()
             }
             .setNegativeButton("Cancelar", null)
@@ -357,7 +393,7 @@ class AdminEventsFragment : Fragment() {
 
     private fun aplicarFiltros() {
         var filtrados = eventos.toList()
-        if (filtroData) filtrados = filtrados.sortedBy { it.startTime }
+        if (filtroData) filtrados = filtrados.sortedBy { it.eventStartTime }
         if (filtroAlfabetico) filtrados = filtrados.sortedBy { it.title }
         adapter.updateData(filtrados)
     }

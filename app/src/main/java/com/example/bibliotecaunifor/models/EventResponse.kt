@@ -11,7 +11,6 @@ data class EventResponse(
     val lecturers: String?,
     val seats: Int?,
     val isDisabled: Boolean?,
-    val adminId: String?,
     val createdAt: String?,
     val updatedAt: String?
 )

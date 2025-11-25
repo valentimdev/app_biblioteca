@@ -37,9 +37,9 @@
         android:id="@+id/edtDataInicio"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Data de início (AAAA-MM-DD)"
+        android:hint="Data de início (DD-MM-AAAA)"
         android:layout_marginTop="8dp"
-        android:inputType="date" />
+        android:inputType="number" />
 
     <EditText
         android:id="@+id/edtHorarioInicio"
@@ -53,9 +53,9 @@
         android:id="@+id/edtDataFim"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Data de fim (AAAA-MM-DD)"
+        android:hint="Data de fim (DD-MM-AAAA)"
         android:layout_marginTop="8dp"
-        android:inputType="date" />
+        android:inputType="number" />
 
     <EditText
         android:id="@+id/edtHorarioFim"

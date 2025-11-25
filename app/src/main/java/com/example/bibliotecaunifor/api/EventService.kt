@@ -1,6 +1,7 @@
-package com.example.bibliotecaunifor.services
+package com.example.bibliotecaunifor.api
 
-import com.example.bibliotecaunifor.api.ApiConfig
+import android.content.Context
+import android.net.Uri
 import com.example.bibliotecaunifor.models.EventDto
 import com.example.bibliotecaunifor.AdminEvento
 import org.json.JSONArray
@@ -28,46 +29,81 @@ object EventService {
             val array = JSONArray(response)
             for (i in 0 until array.length()) {
                 val obj = array.getJSONObject(i)
-                eventos.add(EventDto(
-                    id = obj.optString("id"),
-                    title = obj.optString("title"),
-                    description = obj.optString("description"),
-                    startTime = obj.optString("startTime"),
-                    endTime = obj.optString("endTime"),
-                    location = obj.optString("location"),
-                    imageUrl = obj.optString("image_url"),
-                    lecturers = obj.optString("lecturers")
-                ))
+                eventos.add(
+                    EventDto(
+                        id = obj.getString("id"),
+                        title = obj.getString("title"),
+                        description = obj.optString("description", null),
+                        eventStartTime = obj.optString("eventStartTime", null),
+                        eventEndTime = obj.optString("eventEndTime", null),
+                        registrationStartTime = obj.optString("registrationStartTime", null),
+                        registrationEndTime = obj.optString("registrationEndTime", null),
+                        startTime = obj.optString("startTime", null),
+                        endTime = obj.optString("endTime", null),
+                        location = obj.optString("location", null),
+                        imageUrl = obj.optString("imageUrl", null),
+                        lecturers = obj.optString("lecturers", null),
+                        seats = obj.optInt("seats", 0),
+                        isDisabled = obj.optBoolean("isDisabled", false),
+                        isFull = obj.optBoolean("isFull", false),
+                        adminId = obj.optString("adminId", null),
+                        createdAt = obj.optString("createdAt", null),
+                        updatedAt = obj.optString("updatedAt", null)
+                    )
+                )
             }
         }
         conn.disconnect()
         return eventos
     }
 
-    fun createEvent(token: String?, evento: AdminEvento): AdminEvento {
+    fun createEvent(context: Context, token: String?, evento: AdminEvento, imageUri: Uri?): AdminEvento {
+        val boundary = "*****${System.currentTimeMillis()}*****"
         val url = URL(EVENTS_URL)
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "POST"
-        conn.setRequestProperty("Content-Type", "application/json")
-        if (!token.isNullOrEmpty()) conn.setRequestProperty("Authorization", "Bearer $token")
+        conn.setRequestProperty("Authorization", "Bearer $token")
+        conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
         conn.doOutput = true
 
-        val json = JSONObject().apply {
-            put("title", evento.title)
-            put("location", evento.location)
-            put("seats", evento.seats)
-            put("startTime", evento.startTime)
-            put("endTime", evento.endTime)
-            put("isDisabled", evento.isDisabled)
-            put("description", evento.description ?: "")
-            put("image_url", evento.imageUrl ?: "")
-            put("lecturers", evento.lecturers ?: "")
-            put("adminId", evento.adminId)
-            put("createdAt", evento.createdAt)
-            put("updatedAt", evento.updatedAt)
+        val output = DataOutputStream(conn.outputStream)
+
+        fun addFormField(name: String, value: String) {
+            output.writeBytes("--$boundary\r\n")
+            output.writeBytes("Content-Disposition: form-data; name=\"$name\"\r\n\r\n")
+            output.writeBytes("$value\r\n")
         }
 
-        conn.outputStream.use { it.write(json.toString().toByteArray()) }
+        addFormField("title", evento.title)
+        evento.description?.let { addFormField("description", it) }
+        evento.location?.let { addFormField("location", it) }
+
+        evento.eventStartTime?.let { addFormField("eventStartTime", it) }
+        evento.eventEndTime?.let { addFormField("eventEndTime", it) }
+        evento.startTime?.let { addFormField("startTime", it) }
+        evento.endTime?.let { addFormField("endTime", it) }
+        evento.registrationStartTime?.let { addFormField("registrationStartTime", it) }
+        evento.registrationEndTime?.let { addFormField("registrationEndTime", it) }
+
+        addFormField("seats", evento.seats.toString())
+        addFormField("isDisabled", evento.isDisabled.toString())
+
+        evento.lecturers?.let { addFormField("lecturers", it) }
+
+        imageUri?.let { uri ->
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val fileName = "evento.jpg"
+            val fileBytes = inputStream?.readBytes() ?: ByteArray(0)
+            output.writeBytes("--$boundary\r\n")
+            output.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"$fileName\"\r\n")
+            output.writeBytes("Content-Type: image/jpeg\r\n\r\n")
+            output.write(fileBytes)
+            output.writeBytes("\r\n")
+        }
+
+        output.writeBytes("--$boundary--\r\n")
+        output.flush()
+        output.close()
 
         if (conn.responseCode !in 200..299) {
             val err = conn.errorStream.bufferedReader().use { it.readText() }
@@ -75,22 +111,27 @@ object EventService {
         }
 
         val resp = conn.inputStream.bufferedReader().use { it.readText() }
-        val respJson = JSONObject(resp)
+        val obj = JSONObject(resp)
 
         return AdminEvento(
-            id = respJson.getString("id"),
-            title = respJson.getString("title"),
-            location = respJson.getString("location"),
-            seats = respJson.getInt("seats"),
-            startTime = respJson.getString("startTime"),
-            endTime = respJson.getString("endTime"),
-            isDisabled = respJson.getBoolean("isDisabled"),
-            description = respJson.optString("description", null),
-            imageUrl = respJson.optString("image_url", null),
-            lecturers = respJson.optString("lecturers", null),
-            adminId = respJson.optString("adminId", ""),
-            createdAt = respJson.optString("createdAt", ""),
-            updatedAt = respJson.optString("updatedAt", "")
+            id = obj.getString("id"),
+            title = obj.getString("title"),
+            description = obj.optString("description", null),
+            eventStartTime = obj.optString("eventStartTime", null),
+            eventEndTime = obj.optString("eventEndTime", null),
+            registrationStartTime = obj.optString("registrationStartTime", null),
+            registrationEndTime = obj.optString("registrationEndTime", null),
+            startTime = obj.optString("startTime", null),
+            endTime = obj.optString("endTime", null),
+            location = obj.optString("location", null),
+            imageUrl = obj.optString("imageUrl", null),
+            lecturers = obj.optString("lecturers", null),
+            seats = obj.getInt("seats"),
+            isDisabled = obj.getBoolean("isDisabled"),
+            isFull = obj.getBoolean("isFull"),
+            adminId = obj.optString("adminId", null),
+            createdAt = obj.optString("createdAt", null),
+            updatedAt = obj.optString("updatedAt", null)
         )
     }
 
@@ -143,8 +184,7 @@ object EventService {
             val err = BufferedReader(InputStreamReader(conn.errorStream)).use { it.readText() }
             throw IOException("Erro ao atualizar ativo: ${conn.responseCode} $err")
         }
+
         conn.disconnect()
     }
-
-
 }

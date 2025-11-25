@@ -8,12 +8,12 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.R
-import com.example.bibliotecaunifor.Rental
 import com.example.bibliotecaunifor.adapters.RecommendationsAdapter
 import com.example.bibliotecaunifor.api.RetrofitClient
 import com.example.bibliotecaunifor.models.UserResponse
 import com.example.bibliotecaunifor.utils.AuthUtils
 import com.example.bibliotecaunifor.api.EventApi
+import com.example.bibliotecaunifor.models.Rental
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -60,13 +60,11 @@ class HomeFragment : Fragment() {
     private fun loadUserData() {
         userApi.getMe().enqueue(object : Callback<UserResponse> {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
-                if (!response.isSuccessful) {
-                    showError("Erro ao carregar usuário", response.code())
-                    return
-                }
-                val user = response.body() ?: return showError("Corpo de usuário vazio")
+                if (!response.isSuccessful) return
+                val user = response.body() ?: return
                 txtWelcome.text = "Olá ${user.name}, bem-vindo!"
-                populateLoans(user.rentals)
+                val rentalsAtivos = user.rentals.filter { it.returnDate == null }
+                populateLoans(rentalsAtivos)
             }
 
             override fun onFailure(call: Call<UserResponse>, t: Throwable) {
@@ -78,7 +76,6 @@ class HomeFragment : Fragment() {
     private fun loadEvents() {
         Thread {
             val eventos = EventApi.fetchEventos()
-
             val mapped = eventos.map {
                 EventResponse(
                     id = it.id,
@@ -91,12 +88,10 @@ class HomeFragment : Fragment() {
                     lecturers = it.lecturers,
                     seats = it.seats,
                     isDisabled = it.isDisabled,
-                    adminId = it.adminId,
                     createdAt = it.createdAt,
                     updatedAt = it.updatedAt
                 )
             }
-
             activity?.runOnUiThread {
                 populateEvents(mapped)
             }
@@ -115,16 +110,13 @@ class HomeFragment : Fragment() {
             addEmptyView("Nenhum empréstimo ativo")
             return
         }
-
         rentals.forEach { rental ->
             val itemView = android.view.LayoutInflater.from(context).inflate(R.layout.item_loan, loansList, false)
-            itemView.findViewById<TextView>(R.id.tvTitle).text = rental.book.title
+            itemView.findViewById<TextView>(R.id.tvTitle).text = rental.book?.title
             itemView.findViewById<TextView>(R.id.tvDue).text = "Devolução: ${formatDate(rental.dueDate)}"
-
             itemView.findViewById<Button>(R.id.btnReturn).setOnClickListener {
-                confirmBookReturn(rental.book.id, rental.book.title)
+                confirmBookReturn(rental.book?.id ?: "Sem id", rental.book?.title ?: "Sem título")
             }
-
             loansList.addView(itemView)
         }
     }
@@ -139,15 +131,13 @@ class HomeFragment : Fragment() {
     }
 
     private fun returnBook(bookId: String) {
-        val token = getAuthToken() ?: return showError("Faça login para devolver livro")
+        val token = getAuthToken() ?: return
         bookApi.returnBook(bookId, token).enqueue(object : Callback<Map<String, Boolean>> {
             override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) {
                 if (response.isSuccessful && response.body()?.get("success") == true) {
                     Toast.makeText(context, "Livro devolvido!", Toast.LENGTH_SHORT).show()
                     loadUserData()
-                } else {
-                    showError("Erro ao devolver livro", response.code())
-                }
+                } else showError("Erro ao devolver livro", response.code())
             }
 
             override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
@@ -161,25 +151,18 @@ class HomeFragment : Fragment() {
             txtNextEvents.text = "Nenhum evento próximo"
             return
         }
-
-        val proximos = events
-            .mapNotNull { ev ->
-                parseDate(ev.startTime)?.let { date -> ev to date.time }
-            }
-            .filter { it.second > System.currentTimeMillis() }
+        val proximos = events.mapNotNull {
+            parseDate(it.startTime)?.let { d -> it to d.time }
+        }.filter { it.second > System.currentTimeMillis() }
             .sortedBy { it.second }
             .take(2)
-
         if (proximos.isEmpty()) {
             txtNextEvents.text = "Nenhum evento próximo"
             return
         }
-
-        val texto = proximos.joinToString("\n\n") { (ev, ts) ->
+        txtNextEvents.text = proximos.joinToString("\n\n") { (ev, ts) ->
             "${ev.title}\n${formatDateTime(ts)}"
         }
-
-        txtNextEvents.text = texto
     }
 
     private fun loadRecommendations() {
@@ -188,8 +171,8 @@ class HomeFragment : Fragment() {
             override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
                 if (!response.isSuccessful) return
                 val books = response.body() ?: emptyList()
-                val recommendations = books.filter { it.availableCopies > 0 }.shuffled().take(5)
-                (rvRecommendations.adapter as? RecommendationsAdapter)?.updateBooks(recommendations)
+                val rec = books.filter { it.availableCopies > 0 }.shuffled().take(5)
+                (rvRecommendations.adapter as? RecommendationsAdapter)?.updateBooks(rec)
             }
 
             override fun onFailure(call: Call<List<Book>>, t: Throwable) {}
@@ -211,10 +194,9 @@ class HomeFragment : Fragment() {
             "yyyy-MM-dd'T'HH:mm:ssXXX",
             "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
         )
-
-        formats.forEach { pattern ->
+        formats.forEach {
             try {
-                val sdf = SimpleDateFormat(pattern, Locale.getDefault())
+                val sdf = SimpleDateFormat(it, Locale.getDefault())
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 return sdf.parse(iso)
             } catch (_: Exception) {}

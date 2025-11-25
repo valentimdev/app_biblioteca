@@ -1,14 +1,24 @@
 package com.example.bibliotecaunifor.models
 
+import com.google.gson.annotations.SerializedName
+
 data class EventDto(
-    val id: String? = null,
+    val id: String,
     val title: String,
-    val description: String? = null,
-    val startTime: String,
-    val endTime: String,
-    val location: String,
-    val imageUrl: String? = null,
-    val lecturers: String? = null,
-    val seats: Int? = null,
-    val isDisabled: Boolean = false,
+    val description: String?,
+    val registrationStartTime: String?,
+    val registrationEndTime: String?,
+    val eventStartTime: String,
+    val eventEndTime: String?,
+    val startTime: String?,
+    val endTime: String?,
+    val location: String?,
+    val imageUrl: String?,
+    val lecturers: String?,
+    val seats: Int,
+    val isDisabled: Boolean,
+    val isFull: Boolean,
+    val adminId: String?,
+    val createdAt: String?,
+    val updatedAt: String?
 )

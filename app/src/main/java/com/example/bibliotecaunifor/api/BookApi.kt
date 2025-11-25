@@ -2,7 +2,7 @@ package com.example.bibliotecaunifor.api
 
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.models.EditBookDto
-import com.example.bibliotecaunifor.Rental
+import com.example.bibliotecaunifor.models.Rental
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -37,7 +37,6 @@ interface BookApi {
     @GET("books/my-rentals")
     fun getMyRentals(@Header("Authorization") token: String): Call<List<Rental>>
 
-    // ====== ADMIN ======
 
     @Multipart
     @POST("books")
@@ -47,6 +46,7 @@ interface BookApi {
         @Part("isbn") isbn: RequestBody,
         @Part("description") description: RequestBody,
         @Part("totalCopies") totalCopies: RequestBody,
+        @Part("availableCopies") availableCopies: RequestBody,
         @Part image: MultipartBody.Part?,
         @Header("Authorization") token: String
     ): Call<Book>

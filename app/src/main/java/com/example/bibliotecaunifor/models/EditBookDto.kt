@@ -5,5 +5,6 @@ data class EditBookDto(
     val author: String,
     val isbn: String,
     val description: String?,
-    val totalCopies: Int?
+    val totalCopies: Int?,
+    val availableCopies: Int?
 )

@@ -1,5 +1,6 @@
 package com.example.bibliotecaunifor.api
 
+import com.example.bibliotecaunifor.models.DashboardResponse
 import com.example.bibliotecaunifor.models.EditUserRequest
 import com.example.bibliotecaunifor.models.UserResponse
 import okhttp3.MultipartBody
@@ -27,4 +28,13 @@ interface UserApi {
 
     @GET("users/me")
     fun getMe(): Call<UserResponse>
+
+    @PATCH("users/{id}/toggle-status")
+    fun toggleStatus(@Path("id") id: String): Call<UserResponse>
+
+    @GET("users/dashboard")
+    fun getDashboardStats(
+        
+        @Header("Authorization") token: String
+    ): Call<DashboardResponse>
 }

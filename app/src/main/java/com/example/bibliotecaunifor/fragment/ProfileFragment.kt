@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.core.net.toFile
@@ -80,9 +81,11 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
                     .error(R.drawable.placeholder_user)
                     .into(imageViewProfile)
 
-                recyclerLivros.adapter = LivroAdapter(user.rentals.map { it.book.title }) { mostrarDialogLivro(it) }
+                val historico = user.rentals.filter { it.returnDate != null }
+                recyclerLivros.adapter = LivroAdapter(historico.map { it.book?.title ?: "Sem titulo" }) { mostrarDialogLivro(it) }
+
                 recyclerEventos.adapter = EventoCarrosselAdapter(user.events.map {
-                    Evento(it.id, it.title, it.description, it.startTime, it.endTime ?: "", it.location, it.imageUrl, "",0,false,"","","")
+                    Evento(it.id, it.title, it.description, it.startTime, it.endTime ?: "", it.location, it.imageUrl, "",0,false,"","")
                 }) { mostrarDialogEvento(it) }
             }
 
@@ -118,44 +121,68 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
         }
 
         buttonSalvar.setOnClickListener {
-            val namePart = editUsername.text.toString().toRequestBody("text/plain".toMediaType())
-            val emailPart = editEmail.text.toString().toRequestBody("text/plain".toMediaType())
+            val namePart = editUsername.text.toString()
+                .toRequestBody("text/plain".toMediaType())
+
+            val emailPart = editEmail.text.toString()
+                .toRequestBody("text/plain".toMediaType())
 
             var imagePart: MultipartBody.Part? = null
-            selectedImageUri?.let { uri ->
-                val inputStream = requireContext().contentResolver.openInputStream(uri)
-                val tempFile = File(requireContext().cacheDir, "temp_image.jpg")
-                tempFile.outputStream().use { output ->
-                    inputStream?.copyTo(output)
-                }
 
-                val requestBody = tempFile.asRequestBody("image/*".toMediaType())
+            selectedImageUri?.let { uri ->
+                val resolver = requireContext().contentResolver
+                val mimeType = resolver.getType(uri) ?: "image/jpeg"
+
+                val inputStream = resolver.openInputStream(uri)
+                val bytes = inputStream!!.readBytes()
+                inputStream.close()
+
+                val ext = mimeType.substringAfter("/")
+                val tempFile = File(requireContext().cacheDir, "profile_temp.$ext")
+                tempFile.writeBytes(bytes)
+
+                val requestBody = tempFile.asRequestBody(mimeType.toMediaType())
+
                 imagePart = MultipartBody.Part.createFormData(
                     "image",
                     tempFile.name,
                     requestBody
                 )
             }
-            RetrofitClient.userApi.editUserMultipart(namePart, emailPart, imagePart)
-                .enqueue(object : Callback<UserResponse> {
-                    override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
-                        if (!response.isSuccessful || response.body() == null) return
-                        val updated = response.body()!!
-                        textViewUsername.text = updated.name
-                        textViewEmail.text = updated.email
-                        if (updated.imageUrl != null) {
-                            Glide.with(requireContext())
-                                .load(updated.imageUrl)
-                                .placeholder(R.drawable.placeholder_user)
-                                .error(R.drawable.placeholder_user)
-                                .into(view.findViewById(R.id.imageViewProfile))
-                        }
-                        Toast.makeText(requireContext(), "Perfil atualizado!", Toast.LENGTH_SHORT).show()
-                        dialog?.dismiss()
+
+            RetrofitClient.userApi.editUserMultipart(
+                namePart,
+                emailPart,
+                imagePart
+            ).enqueue(object : Callback<UserResponse> {
+                override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                    Log.d("EDIT_USER_DEBUG", "Código HTTP: ${response.code()}")
+                    Log.d("EDIT_USER_DEBUG", "Body: ${response.body()}")
+                    Log.d("EDIT_USER_DEBUG", "Erro bruto: ${response.errorBody()?.string()}")
+
+                    if (!response.isSuccessful || response.body() == null) return
+
+                    val updated = response.body()!!
+
+                    textViewUsername.text = updated.name
+                    textViewEmail.text = updated.email
+
+                    if (updated.imageUrl != null) {
+                        Glide.with(requireContext())
+                            .load(updated.imageUrl)
+                            .placeholder(R.drawable.placeholder_user)
+                            .error(R.drawable.placeholder_user)
+                            .into(view.findViewById(R.id.imageViewProfile))
                     }
 
-                    override fun onFailure(call: Call<UserResponse>, t: Throwable) {}
-                })
+                    Toast.makeText(requireContext(), "Perfil atualizado!", Toast.LENGTH_SHORT).show()
+                    dialog?.dismiss()
+                }
+
+                override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                    Log.e("EDIT_USER_DEBUG", "Falha total: ${t.message}")
+                }
+            })
         }
 
         dialog!!.show()
@@ -169,6 +196,6 @@ class ProfileFragment : Fragment(R.layout.activity_perfil_usuario) {
         }
     }
 
-    private fun mostrarDialogLivro(livro: String) { /* ... */ }
-    private fun mostrarDialogEvento(evento: Evento) { /* ... */ }
+    private fun mostrarDialogLivro(livro: String) {}
+    private fun mostrarDialogEvento(evento: Evento) {}
 }

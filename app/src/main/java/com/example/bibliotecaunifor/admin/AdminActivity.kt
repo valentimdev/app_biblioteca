@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
-import br.unifor.biblioteca.admin.GestaoFragment
 import com.example.bibliotecaunifor.ConfiguracoesActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.fragment.AdminEventsFragment

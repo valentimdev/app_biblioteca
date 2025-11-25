@@ -1,28 +1,29 @@
 package com.example.bibliotecaunifor
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.bibliotecaunifor.adapters.BookAdapter
 import com.example.bibliotecaunifor.api.RetrofitClient
 import com.example.bibliotecaunifor.fragment.BookDetailFragment
+import com.example.bibliotecaunifor.models.UserResponse
 import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import com.example.bibliotecaunifor.R
 
 class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
 
-    private lateinit var rvBooks: RecyclerView
+    private lateinit var rvBooks: androidx.recyclerview.widget.RecyclerView
     private lateinit var edtSearch: EditText
     private lateinit var adapter: BookAdapter
     private val allBooks = mutableListOf<Book>()
     private var showOnlyAvailable = false
+    private var userRentedBookIds = emptyList<String>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         rvBooks = view.findViewById(R.id.rvBooks)
@@ -33,8 +34,10 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
         adapter = BookAdapter(allBooks, false) { action, book ->
             if (action == "detail") {
                 requireActivity().supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, BookDetailFragment.newInstance(book, false))
-                    .addToBackStack("book_detail")
+                    .replace(
+                        R.id.fragment_container,
+                        BookDetailFragment.newInstance(book, userRentedBookIds.contains(book.id))
+                    )
                     .commit()
             }
         }
@@ -47,34 +50,56 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
             true
         }
 
-        fetchBooks()
+        fetchUserRentals { rentedIds ->
+            userRentedBookIds = rentedIds
+            Log.d("CatalogUserFragment", "Empréstimos ativos do usuário: $userRentedBookIds")
+            fetchBooks()
+        }
+    }
+
+    private fun fetchUserRentals(callback: (List<String>) -> Unit) {
+        val token = AuthUtils.getToken(requireContext()) ?: return callback(emptyList())
+        val bearer = "Bearer $token"
+
+        RetrofitClient.userApi.getMe().enqueue(object : Callback<UserResponse> {
+            override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                val rentals = response.body()?.rentals ?: emptyList()
+                val activeBookIds = rentals.filter { it.returnDate == null }.map { it.bookId }
+                callback(activeBookIds)
+            }
+
+            override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                Log.e("CatalogUserFragment", "Falha ao buscar rentals", t)
+                callback(emptyList())
+            }
+        })
+    }
+
+    fun refreshCatalog() {
+        fetchUserRentals { rentedIds ->
+            userRentedBookIds = rentedIds
+            allBooks.forEach { it.isRentedByUser = userRentedBookIds.contains(it.id) }
+            applyFilterAndSearch()
+        }
     }
 
     private fun fetchBooks() {
-        val tokenStr = AuthUtils.getToken(requireContext())
-        if (tokenStr.isNullOrEmpty()) {
-            android.util.Log.e("CatalogUserFragment", "Token nulo!")
-            return
-        }
+        val tokenStr = AuthUtils.getToken(requireContext()) ?: return
         val token = "Bearer $tokenStr"
 
         RetrofitClient.bookApi.getBooks(token).enqueue(object : Callback<List<Book>> {
             override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
-                android.util.Log.d("CatalogUserFragment", "Response code: ${response.code()}")
                 if (response.isSuccessful) {
                     allBooks.clear()
-                    allBooks.addAll(response.body() ?: emptyList())
+                    val books = response.body() ?: emptyList()
+                    books.forEach { it.isRentedByUser = userRentedBookIds.contains(it.id) }
+                    allBooks.addAll(books)
                     applyFilterAndSearch()
-                } else {
-                    android.util.Log.e(
-                        "CatalogUserFragment",
-                        "Erro ao buscar livros: ${response.code()} - ${response.errorBody()?.string()}"
-                    )
                 }
             }
 
             override fun onFailure(call: Call<List<Book>>, t: Throwable) {
-                android.util.Log.e("CatalogUserFragment", "Falha na requisição", t)
+                Log.e("CatalogUserFragment", "Falha ao buscar livros", t)
             }
         })
     }
@@ -101,9 +126,7 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
             }
         }
 
-        if (showOnlyAvailable) {
-            list = list.filter { it.availableCopies > 0 }
-        }
+        if (showOnlyAvailable) list = list.filter { it.availableCopies > 0 }
 
         adapter.updateData(list.toList())
     }

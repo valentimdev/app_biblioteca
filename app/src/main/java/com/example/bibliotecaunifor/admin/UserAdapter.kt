@@ -1,4 +1,3 @@
-// app/src/main/java/com/example/bibliotecaunifor/admin/UsersAdapter.kt
 package com.example.bibliotecaunifor.admin
 
 import android.view.LayoutInflater
@@ -32,19 +31,19 @@ class UsersAdapter(
         with(holder.b) {
             tvNome.text = u.name
             tvMatricula.text = "Matrícula: ${u.matricula}"
-            chipStatus.text = u.status.name
 
-            // Define a cor do texto de acordo com o status
-            val color = if (u.status == UserStatus.ACTIVE) {
-                // Use uma cor existente no seu projeto; ajuste se não tiver teal_700
-                ContextCompat.getColor(root.context, R.color.teal_700)
+            if (u.status == UserStatus.BANNED) {
+                chipStatus.text = "BLOQUEADO"
+                chipStatus.setTextColor(
+                    ContextCompat.getColor(root.context, R.color.error)
+                )
             } else {
-                // Se não existir R.color.error, troque por R.color.red ou similar
-                ContextCompat.getColor(root.context, R.color.error)
+                chipStatus.text = "ATIVO"
+                chipStatus.setTextColor(
+                    ContextCompat.getColor(root.context, R.color.teal_700)
+                )
             }
-            chipStatus.setTextColor(color)
 
-            // Clique no card
             root.setOnClickListener { onClick(u) }
         }
     }

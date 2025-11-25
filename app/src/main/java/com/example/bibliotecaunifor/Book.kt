@@ -12,5 +12,6 @@ data class Book(
     val description: String?,
     val totalCopies: Int,
     val availableCopies: Int,
-    val imageUrl: String?
+    val imageUrl: String?,
+    var isRentedByUser: Boolean = false
 )
