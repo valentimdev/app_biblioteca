@@ -55,7 +55,7 @@
                     android:layout_height="80dp"
                     android:layout_gravity="center"
                     android:layout_marginBottom="16dp"
-                    android:src="@drawable/ic_launcher_foreground" />
+                    android:src="@drawable/uniforlogo" />
 
                 <TextView
                     android:id="@+id/titleTextView"
@@ -112,6 +112,7 @@
                     android:textColor="@color/white"
                     android:textSize="18sp"
                     android:textStyle="bold" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
