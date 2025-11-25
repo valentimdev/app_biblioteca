@@ -7,6 +7,10 @@
     <string name="login_matricula_hint">Matrícula</string>
     <string name="login_senha_hint">Senha</string>
     <string name="login_button">Entrar</string>
+    <string name="evento_local">Local: %1$s</string>
+    <string name="evento_vagas">Vagas: %1$s</string>
+    <string name="evento_data">Data: %1$s</string>
+    <string name="evento_horario">Horário: %1$s</string>
     <string name="login_forgot_password">Esqueceu a senha?</string>
     <string name="login_no_account">Não tem uma conta? </string>
     <string name="login_register"> Cadastre-se</string>

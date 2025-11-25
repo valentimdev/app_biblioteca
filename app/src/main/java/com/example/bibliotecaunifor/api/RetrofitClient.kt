@@ -1,6 +1,5 @@
 package com.example.bibliotecaunifor.api
 
-import com.example.bibliotecaunifor.services.EventService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -17,7 +16,7 @@ object RetrofitClient {
         return token
     }
 
-        private val okHttpClient: OkHttpClient
+    private val okHttpClient: OkHttpClient
         get() = OkHttpClient.Builder()
             .addInterceptor(TokenInterceptor { token })
             .build()
@@ -40,4 +39,7 @@ object RetrofitClient {
 
     val userApi: UserApi
         get() = retrofit.create(UserApi::class.java)
+
+    val rentalApi: RentalApi
+        get() = retrofit.create(RentalApi::class.java)
 }

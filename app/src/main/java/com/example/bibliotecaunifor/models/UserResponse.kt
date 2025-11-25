@@ -1,6 +1,5 @@
 package com.example.bibliotecaunifor.models
 
-import com.example.bibliotecaunifor.Rental
 import com.example.bibliotecaunifor.admin.UserStatus
 
 data class UserResponse(

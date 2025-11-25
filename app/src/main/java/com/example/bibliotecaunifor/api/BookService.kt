@@ -2,7 +2,7 @@ package com.example.bibliotecaunifor.services
 
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.api.ApiConfig
-import com.example.bibliotecaunifor.Rental
+import com.example.bibliotecaunifor.models.Rental
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.*
@@ -113,6 +113,8 @@ object BookService {
                     rentalDate = obj.getString("rentalDate"),
                     dueDate = obj.getString("dueDate"),
                     returnDate = obj.optString("returnDate", null),
+                    createdAt = obj.optString("createdAt"),
+                    updatedAt = obj.optString("updatedAt"),
                     book = Book(
                         id = bookObj.getString("id"),
                         title = bookObj.getString("title"),

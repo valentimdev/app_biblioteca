@@ -4,18 +4,21 @@ import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.icu.util.TimeZone
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.example.bibliotecaunifor.Book
+import com.example.bibliotecaunifor.CatalogUserFragment
 import com.example.bibliotecaunifor.MainActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.api.RetrofitClient
+import com.example.bibliotecaunifor.models.Rental
+import com.example.bibliotecaunifor.models.UserResponse
 import com.example.bibliotecaunifor.utils.AuthUtils
 import retrofit2.Call
 import retrofit2.Callback
@@ -25,10 +28,10 @@ import java.util.Locale
 class BookDetailFragment : Fragment() {
 
     private lateinit var book: Book
-    private var isAdmin: Boolean = false
+    private var userHasRental: Boolean = false
 
     companion object {
-        fun newInstance(book: Book, isAdmin: Boolean = false): BookDetailFragment {
+        fun newInstance(book: Book, userHasRental: Boolean = false): BookDetailFragment {
             val frag = BookDetailFragment()
             val args = Bundle().apply {
                 putString("id", book.id)
@@ -40,7 +43,8 @@ class BookDetailFragment : Fragment() {
                 putString("description", book.description ?: "")
                 putInt("totalCopies", book.totalCopies)
                 putInt("availableCopies", book.availableCopies)
-                putBoolean("isAdmin", isAdmin)
+                putBoolean("userHasRental", userHasRental)
+                putString("imageUrl", book.imageUrl)
             }
             frag.arguments = args
             return frag
@@ -62,77 +66,119 @@ class BookDetailFragment : Fragment() {
                 availableCopies = it.getInt("availableCopies"),
                 imageUrl = it.getString("imageUrl")
             )
-            isAdmin = it.getBoolean("isAdmin", false)
+            userHasRental = it.getBoolean("userHasRental", false)
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View = inflater.inflate(R.layout.fragment_book_detail, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        inflater.inflate(R.layout.fragment_book_detail, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view.findViewById<TextView>(R.id.txtTitle).text = book.title
-        view.findViewById<TextView>(R.id.txtAuthor).text = "Autor: ${book.author}"
-        view.findViewById<TextView>(R.id.txtIsbn).text = "ISBN: ${book.isbn ?: "-"}"
-        view.findViewById<TextView>(R.id.txtDescription).text = "Descrição: ${book.description ?: "-"}"
-        view.findViewById<TextView>(R.id.txtTotalCopies).text = "Cópias: ${book.availableCopies} / ${book.totalCopies} disponíveis"
-
+        val txtTitle = view.findViewById<TextView>(R.id.txtTitle)
+        val txtAuthor = view.findViewById<TextView>(R.id.txtAuthor)
+        val txtIsbn = view.findViewById<TextView>(R.id.txtIsbn)
+        val txtDescription = view.findViewById<TextView>(R.id.txtDescription)
+        val txtTotalCopies = view.findViewById<TextView>(R.id.txtTotalCopies)
+        val txtRentedWarning = view.findViewById<TextView>(R.id.txtRentedWarning)
         val btnAction = view.findViewById<Button>(R.id.btnAction)
 
-        if (isAdmin) {
-            btnAction.text = "GERENCIAR ESTOQUE"
-            btnAction.setOnClickListener { showAdminInfo() }
+        txtTitle.text = book.title
+        txtAuthor.text = "Autor: ${book.author}"
+        txtIsbn.text = "ISBN: ${book.isbn ?: "-"}"
+        txtDescription.text = "Descrição: ${book.description ?: "-"}"
+        txtTotalCopies.text = "Cópias: ${book.availableCopies} / ${book.totalCopies} disponíveis"
+
+        if (userHasRental) {
+            txtRentedWarning.visibility = View.VISIBLE
+            txtRentedWarning.text = "Você já possui empréstimo com esse livro"
         } else {
-            if (book.availableCopies > 0) {
+            txtRentedWarning.visibility = View.GONE
+        }
+
+        when {
+            userHasRental -> {
+                btnAction.text = "DEVOLVER AGORA"
+                btnAction.setOnClickListener { returnBook() }
+            }
+            book.availableCopies > 0 -> {
                 btnAction.text = "ALUGAR AGORA"
-                btnAction.setOnClickListener { showUserRentInfo() }
-            } else {
+                btnAction.setOnClickListener { rentBook() }
+            }
+            else -> {
                 btnAction.text = "INDISPONÍVEL"
                 btnAction.isEnabled = false
             }
         }
     }
 
-    private fun showAdminInfo() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Estoque do livro")
-            .setMessage("Total: ${book.totalCopies}\nDisponíveis: ${book.availableCopies}")
-            .setPositiveButton("Fechar", null)
-            .show()
-    }
-
-    private fun showUserRentInfo() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Alugar livro")
-            .setMessage("Você deseja alugar \"${book.title}\"?\n\nDevolução em 7 dias.")
-            .setPositiveButton("Sim") { _, _ -> rentBook() }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
     private fun rentBook() {
         val token = getAuthToken() ?: return showError("Faça login")
-        val body = mapOf("dueDate" to getDueDateIn7Days())
 
-        RetrofitClient.bookApi.rentBook(book.id, body, token)
-            .enqueue(object : Callback<Map<String, Boolean>> {
-                override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) {
-                    if (response.isSuccessful && response.body()?.get("success") == true) {
-                        Toast.makeText(context, "Empréstimo solicitado!", Toast.LENGTH_SHORT).show()
-                        (requireActivity() as? MainActivity)?.refreshHomeFragment()
-                        parentFragmentManager.popBackStack()
-                    } else {
-                        val error = response.errorBody()?.string() ?: "Erro desconhecido"
-                        showError("Falha: $error")
-                    }
+        RetrofitClient.userApi.getMe().enqueue(object : Callback<UserResponse> {
+            override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                if (!response.isSuccessful || response.body() == null) {
+                    showError("Falha ao obter dados do usuário")
+                    return
                 }
 
-                override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
-                    showError("Sem conexão")
+                val userId = response.body()!!.id
+                val body = mapOf(
+                    "userId" to userId,
+                    "bookId" to book.id,
+                    "dueDate" to getDueDateIn7Days()
+                )
+
+                Log.d("BookDetailFragment", "Aluguel body: $body")
+                Log.d("BookDetailFragment", "Token: $token")
+
+                RetrofitClient.rentalApi.rentBook(body, token)
+                    .enqueue(object : Callback<Rental> {
+                        override fun onResponse(call: Call<Rental>, response: Response<Rental>) {
+                            if (response.isSuccessful) {
+                                Toast.makeText(context, "Empréstimo realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                                val btnAction = view?.findViewById<Button>(R.id.btnAction)
+                                btnAction?.text = "DEVOLVER AGORA"
+                                btnAction?.setOnClickListener { returnBook() }
+
+                                (requireActivity() as? MainActivity)?.refreshHomeFragment()
+                                (requireActivity().supportFragmentManager.findFragmentByTag("catalog") as? CatalogUserFragment)?.refreshCatalog()
+                            } else {
+                                val error = response.errorBody()?.string() ?: "Erro desconhecido"
+                                showError("Falha ao alugar livro: $error")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<Rental>, t: Throwable) {
+                            showError("Sem conexão: ${t.message}")
+                        }
+                    })
+            }
+
+            override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                showError("Falha ao obter usuário: ${t.message}")
+            }
+        })
+    }
+
+    private fun returnBook() {
+        val token = getAuthToken() ?: return showError("Faça login")
+
+        RetrofitClient.bookApi.returnBook(book.id, token).enqueue(object : Callback<Map<String, Boolean>> {
+            override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) {
+                if (response.isSuccessful && response.body()?.get("success") == true) {
+                    Toast.makeText(context, "Livro devolvido!", Toast.LENGTH_SHORT).show()
+                    (requireActivity() as? MainActivity)?.refreshHomeFragment()
+                    parentFragmentManager.popBackStack()
+                } else {
+                    val error = response.errorBody()?.string() ?: "Erro desconhecido"
+                    showError("Falha: $error")
                 }
-            })
+            }
+
+            override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) { showError("Sem conexão") }
+        })
     }
 
     private fun getDueDateIn7Days(): String {

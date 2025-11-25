@@ -1,4 +1,4 @@
-package br.unifor.biblioteca.admin
+package com.example.bibliotecaunifor.admin
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,15 +9,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.bibliotecaunifor.admin.GestaoViewModel
-import com.example.bibliotecaunifor.admin.User
 import com.example.bibliotecaunifor.databinding.FragmentAdminGestaoBinding
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import com.example.bibliotecaunifor.R
-import com.example.bibliotecaunifor.admin.UserStatus
-import com.example.bibliotecaunifor.admin.UsersAdapter
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.appbar.MaterialToolbar
 
 class GestaoFragment : Fragment() {
@@ -61,12 +57,12 @@ class GestaoFragment : Fragment() {
             .setTitle(user.name)
             .setMessage("Status: ${user.status}\n\n${acao} este usuário?")
             .setPositiveButton(acao) { _, _ ->
-                // vm.toggleStatus(user.id) // Backend ainda não implementado
+                vm.toggleStatus(user.id)
             }
             .setNegativeButton("Histórico") { _, _ ->
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Histórico")
-                    .setMessage("Aqui entra a timeline de empréstimos (sem backend ainda)")
+                    .setMessage("Aqui entra a timeline de empréstimos")
                     .setPositiveButton("Fechar", null)
                     .show()
             }

@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.databinding.ItemBookBinding
@@ -26,18 +27,28 @@ class BookAdapter(
         val book = books[position]
         val b = holder.binding
 
-        // dados principais
         b.tvTitle.text = book.title
         b.tvAuthor.text = book.author
 
+        Glide.with(b.root.context)
+            .load(book.imageUrl ?: "")
+            .placeholder(R.drawable.placeholder_user)
+            .error(R.drawable.placeholder_book)
+            .into(b.imgThumb)
 
-        // mostra ou esconde o botão de opções conforme for admin
         b.btnMore.visibility = if (isAdmin) View.VISIBLE else View.GONE
 
-        // clique no card -> detalhe
+        // Status de empréstimo ativo
+        if (book.isRentedByUser) {
+            b.tvStatus.visibility = View.VISIBLE
+            b.tvStatus.text = "Você já possui empréstimo com esse livro"
+            b.tvStatus.setTextColor(b.root.context.getColor(android.R.color.holo_red_dark))
+        } else {
+            b.tvStatus.visibility = View.GONE
+        }
+
         b.root.setOnClickListener { onAction("detail", book) }
 
-        // clique no botão -> menu admin
         b.btnMore.setOnClickListener { view ->
             val popup = PopupMenu(view.context, view)
             popup.menuInflater.inflate(R.menu.menu_book_admin, popup.menu)

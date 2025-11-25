@@ -116,6 +116,7 @@ class CatalogAdminFragment : Fragment() {
         val edtIsbn = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtIsbn)
         val edtDescricao = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtDescricao)
         val edtTotalCopies = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtTotalCopies)
+        val edtAvailableCopies = layout.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.edtAvailableCopies)
         val imgCover = layout.findViewById<ImageView>(R.id.imgCover)
         val btnSelectImage = layout.findViewById<Button>(R.id.btnSelectImage)
         if (book != null) {
@@ -124,6 +125,7 @@ class CatalogAdminFragment : Fragment() {
             edtIsbn.setText(book.isbn ?: "")
             edtDescricao.setText(book.description ?: "")
             edtTotalCopies.setText(book.totalCopies.toString())
+            edtAvailableCopies.setText(book.availableCopies.toString())
             if (!book.imageUrl.isNullOrEmpty()) Glide.with(this).load(book.imageUrl).into(imgCover)
         }
         btnSelectImage.setOnClickListener {
@@ -137,8 +139,8 @@ class CatalogAdminFragment : Fragment() {
             .setPositiveButton("Salvar") { _, _ ->
                 val tokenStr = AuthUtils.getToken(requireContext()) ?: return@setPositiveButton
                 val token = "Bearer $tokenStr"
-                if (book == null) createBook(edtTitulo, edtAutor, edtIsbn, edtDescricao, edtTotalCopies, token)
-                else updateBook(book.id, edtTitulo, edtAutor, edtIsbn, edtDescricao, edtTotalCopies, token)
+                if (book == null) createBook(edtTitulo, edtAutor, edtIsbn, edtDescricao, edtTotalCopies, edtAvailableCopies, token)
+                else updateBook(book.id, edtTitulo, edtAutor, edtIsbn, edtDescricao, edtTotalCopies, edtAvailableCopies, token)
             }
             .setNegativeButton("Cancelar", null)
             .show()
@@ -150,6 +152,7 @@ class CatalogAdminFragment : Fragment() {
         edtIsbn: com.google.android.material.textfield.TextInputEditText,
         edtDescricao: com.google.android.material.textfield.TextInputEditText,
         edtTotalCopies: com.google.android.material.textfield.TextInputEditText,
+        edtAvailableCopies: com.google.android.material.textfield.TextInputEditText,
         token: String
     ) {
         val titlePart = edtTitulo.text.toString().toRequestBody("text/plain".toMediaType())
@@ -157,13 +160,23 @@ class CatalogAdminFragment : Fragment() {
         val isbnPart = edtIsbn.text.toString().toRequestBody("text/plain".toMediaType())
         val descriptionPart = edtDescricao.text.toString().toRequestBody("text/plain".toMediaType())
         val totalCopiesPart = (edtTotalCopies.text.toString().toIntOrNull() ?: 0).toString().toRequestBody("text/plain".toMediaType())
+        val availableCopiesPart = (edtAvailableCopies.text.toString().toIntOrNull() ?: 0).toString().toRequestBody("text/plain".toMediaType())
 
         val imagePart = selectedImageUri?.let { uri ->
             val file = File(uri.path!!)
             MultipartBody.Part.createFormData("image", file.name, file.asRequestBody("image/*".toMediaType()))
         }
 
-        RetrofitClient.bookApi.createBook(titlePart, authorPart, isbnPart, descriptionPart, totalCopiesPart, imagePart, token)
+        RetrofitClient.bookApi.createBook(
+            titlePart,
+            authorPart,
+            isbnPart,
+            descriptionPart,
+            totalCopiesPart,
+            availableCopiesPart,
+            imagePart,
+            token
+        )
     }
 
     private fun updateBook(
@@ -173,6 +186,7 @@ class CatalogAdminFragment : Fragment() {
         edtIsbn: com.google.android.material.textfield.TextInputEditText,
         edtDescricao: com.google.android.material.textfield.TextInputEditText,
         edtTotalCopies: com.google.android.material.textfield.TextInputEditText,
+        edtAvailableCopies: com.google.android.material.textfield.TextInputEditText,
         token: String
     ) {
         val dto = EditBookDto(
@@ -180,7 +194,8 @@ class CatalogAdminFragment : Fragment() {
             author = edtAutor.text.toString(),
             isbn = edtIsbn.text.toString(),
             description = edtDescricao.text.toString(),
-            totalCopies = edtTotalCopies.text.toString().toIntOrNull()
+            totalCopies = edtTotalCopies.text.toString().toIntOrNull(),
+            availableCopies = edtAvailableCopies.text.toString().toIntOrNull()
         )
         RetrofitClient.bookApi.updateBook(bookId, dto, token).enqueue(object : Callback<Book> {
             override fun onResponse(call: Call<Book>, response: Response<Book>) { if (response.isSuccessful) fetchBooks() }
