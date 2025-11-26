@@ -2,21 +2,42 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="160dp"
     android:layout_height="100dp"
-    android:layout_marginEnd="8dp"
-    android:layout_marginStart="8dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
-    android:elevation="4dp"
-    android:padding="8dp">
+    android:layout_margin="8dp"
+    android:elevation="6dp"
+    android:radius="12dp">
 
-    <TextView
-        android:id="@+id/tvTituloEventoCarrossel"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Título do Evento"
-        android:textColor="@color/unifor_traditional_blue"
-        android:textStyle="bold"
-        android:textSize="14sp"
-        android:gravity="center" />
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/imgEventoCarrossel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@color/black" />
+
+        <!-- Fundo translúcido para melhorar a leitura -->
+        <View
+            android:id="@+id/bgTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:layout_alignParentBottom="true"
+            android:background="#AA000000"/>
+
+        <TextView
+            android:id="@+id/tvTituloEventoCarrossel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/bgTitulo"
+            android:padding="4dp"
+            android:text="Título do Evento"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+    </RelativeLayout>
 
 </androidx.cardview.widget.CardView>

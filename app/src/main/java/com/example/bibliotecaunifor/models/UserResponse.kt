@@ -11,5 +11,5 @@ data class UserResponse(
     val role: String,
     val status: UserStatus?,
     val rentals: List<Rental> = emptyList(),
-    val events: List<EventResponse> = emptyList(),
+    val events: List<EventDto> = emptyList(),
 )

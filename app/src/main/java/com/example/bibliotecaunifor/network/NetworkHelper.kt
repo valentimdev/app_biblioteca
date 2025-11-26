@@ -1,10 +1,14 @@
 package com.example.bibliotecaunifor.network
 
+import com.example.bibliotecaunifor.admin.UserStatus
 import com.example.bibliotecaunifor.api.ApiConfig
+import kotlinx.coroutines.Dispatchers
 import org.json.JSONObject
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.withContext
+
 
 object NetworkHelper {
 
@@ -34,18 +38,32 @@ object NetworkHelper {
         return JSONObject(response)
     }
 
-    fun login(matricula: String, password: String): Pair<String?, String?> {
+    fun login(matricula: String, password: String): Triple<String?, String?, UserStatus?> {
         val jsonBody = JSONObject()
             .put("matricula", matricula)
             .put("password", password)
 
         return try {
             val response = postJson("auth/signin", jsonBody)
+
+            // Extrai token e role (como antes)
             val token = response.optString("access_token", null)
             val role = response.optString("role", null)
-            Pair(token, role)
+
+            // Extrai o status do usuário
+            val statusString = response.optString("status", null)
+                ?: response.optJSONObject("user")?.optString("status", null)
+
+            val status = when (statusString?.uppercase()) {
+                "BANNED" -> UserStatus.BANNED
+                "ACTIVE" -> UserStatus.ACTIVE
+                else -> null
+            }
+
+            Triple(token, role, status)
         } catch (e: Exception) {
-            Pair(null, null)
+            e.printStackTrace()
+            Triple(null, null, null)
         }
     }
 
@@ -61,6 +79,41 @@ object NetworkHelper {
             response.has("access_token")
         } catch (e: Exception) {
             false
+        }
+    }
+    suspend fun checkStatusFromError(matricula: String): UserStatus? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val url = URL(ApiConfig.BASE_URL + "users/me")
+                val conn = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 5000  // Mais rápido, só gambiarra
+                    readTimeout = 5000
+                    // NÃO manda token! Deixa falhar
+                }
+
+                val responseCode = conn.responseCode
+                if (responseCode == 401) {  // Erro esperado
+                    val errorResponse = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                    val jsonError = try { JSONObject(errorResponse) } catch (e: Exception) { JSONObject() }
+
+                    // Extrai user do corpo do erro (JwtGuard vaza isso)
+                    val userJson = jsonError.optJSONObject("user")
+                        ?: jsonError.optJSONObject("message")?.optJSONObject("user")
+
+                    if (userJson != null) {
+                        val statusStr = userJson.optString("status", "").uppercase()
+                        return@withContext when (statusStr) {
+                            "BANNED" -> UserStatus.BANNED
+                            "ACTIVE" -> UserStatus.ACTIVE
+                            else -> null
+                        }
+                    }
+                }
+                null  // Não é banido ou erro diferente
+            } catch (e: Exception) {
+                null
+            }
         }
     }
 }

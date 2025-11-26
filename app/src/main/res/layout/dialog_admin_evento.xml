@@ -1,104 +1,207 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
-    <EditText
-        android:id="@+id/edtTitulo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Título do evento" />
-
-    <EditText
-        android:id="@+id/edtDescricao"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Descrição do evento"
-        android:layout_marginTop="8dp"/>
-
-    <EditText
-        android:id="@+id/edtLocal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Local"
-        android:layout_marginTop="8dp"/>
-
-    <EditText
-        android:id="@+id/edtVagas"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Vagas"
-        android:inputType="number"
-        android:layout_marginTop="8dp"/>
-
-    <EditText
-        android:id="@+id/edtDataInicio"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Data de início (DD-MM-AAAA)"
-        android:layout_marginTop="8dp"
-        android:inputType="number" />
-
-    <EditText
-        android:id="@+id/edtHorarioInicio"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Hora de início (HH:mm)"
-        android:layout_marginTop="8dp"
-        android:inputType="time" />
-
-    <EditText
-        android:id="@+id/edtDataFim"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Data de fim (DD-MM-AAAA)"
-        android:layout_marginTop="8dp"
-        android:inputType="number" />
-
-    <EditText
-        android:id="@+id/edtHorarioFim"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Hora de fim (HH:mm)"
-        android:layout_marginTop="8dp"
-        android:inputType="time" />
+    android:layout_height="wrap_content"
+    android:padding="16dp">
 
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="start"
-        android:layout_marginTop="8dp">
+        android:layout_height="wrap_content">
 
+        <!-- Título -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Título do evento">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtTitulo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Descrição -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Descrição do evento">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtDescricao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="2" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Local -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Local">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtLocal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Vagas -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Quantidade de vagas">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtVagas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="30" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Início do evento -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Evento desativado"
-            android:textSize="16sp"
-            android:layout_gravity="center_vertical"/>
+            android:text="Início do evento"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:layout_marginBottom="8dp" />
 
-        <Switch
-            android:id="@+id/switchDisabled"
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <!-- Data Início -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:hint="DD-MM-AAAA">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtDataInicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLength="10" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Horário Início -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:hint="HH:mm">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtHorarioInicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLength="5" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <!-- Fim do evento (opcional) -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"/>
+            android:text="Fim do evento (opcional)"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <!-- Data Fim -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:hint="DD-MM-AAAA">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtDataFim"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLength="10" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Horário Fim -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:hint="HH:mm">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtHorarioFim"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLength="5" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <!-- Switch Desativado -->
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switchDisabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Evento desativado (não aparece para alunos)"
+            android:layout_marginVertical="16dp" />
+
+        <!-- Botão Escolher Imagem -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEscolherImagem"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Escolher imagem do evento"
+            app:icon="@android:drawable/ic_menu_gallery"
+            app:iconGravity="textStart"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Preview da Imagem -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/imgPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="#E0E0E0"
+                android:contentDescription="Pré-visualização da imagem do evento" />
+        </androidx.cardview.widget.CardView>
+
     </LinearLayout>
-
-    <Button
-        android:id="@+id/btnEscolherImagem"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Escolher imagem"
-        android:layout_marginTop="8dp"/>
-
-    <ImageView
-        android:id="@+id/imgPreview"
-        android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:layout_marginTop="8dp"
-        android:scaleType="centerCrop"
-        />
-
-</LinearLayout>
+</ScrollView>
