@@ -160,6 +160,21 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
+        <!-- Mensagem para usuário bloqueado -->
+        <TextView
+            android:id="@+id/blockedUserMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Usuário bloqueado?\nDirija-se à biblioteca física para regularizar sua situação."
+            android:textColor="#D32F2F"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:gravity="center"
+            android:lineSpacingExtra="4dp"
+            android:background="@drawable/border_rounded_red"
+            android:padding="12dp"
+            android:visibility="gone" />  <!-- Começa invisível -->
 
     </LinearLayout>
 

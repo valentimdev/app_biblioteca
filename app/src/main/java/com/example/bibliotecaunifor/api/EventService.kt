@@ -2,6 +2,9 @@ package com.example.bibliotecaunifor.api
 
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.OptIn
+import androidx.media3.common.util.Log
+import androidx.media3.common.util.UnstableApi
 import com.example.bibliotecaunifor.models.EventDto
 import com.example.bibliotecaunifor.AdminEvento
 import org.json.JSONArray
@@ -169,7 +172,8 @@ object EventService {
         conn.disconnect()
     }
 
-    fun toggleAtivoEvento(token: String?, eventId: String, ativo: Boolean) {
+
+    fun toggleAtivoEvento(token: String?, eventId: String, isDisabled: Boolean) {
         val url = URL("$EVENTS_URL/$eventId")
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "PATCH"
@@ -177,7 +181,7 @@ object EventService {
         if (!token.isNullOrEmpty()) conn.setRequestProperty("Authorization", "Bearer $token")
         conn.doOutput = true
 
-        val json = JSONObject().apply { put("isDisabled", !ativo) }
+        val json = JSONObject().apply { put("isDisabled", isDisabled) }
         conn.outputStream.use { it.write(json.toString().toByteArray()) }
 
         if (conn.responseCode !in 200..299) {
@@ -186,5 +190,50 @@ object EventService {
         }
 
         conn.disconnect()
+    }
+
+
+
+    @OptIn(UnstableApi::class)
+    fun uploadEventImage(context: Context, token: String?, eventId: String, imageUri: Uri?) {
+        if (imageUri == null) return
+
+        val boundary = "*****${System.currentTimeMillis()}*****"
+        val url = URL("$EVENTS_URL/$eventId/image")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "PUT"  // ou "PATCH" dependendo do seu backend
+        conn.setRequestProperty("Authorization", "Bearer $token")
+        conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+        conn.doOutput = true
+
+        try {
+            val output = DataOutputStream(conn.outputStream)
+
+            // Envia apenas a imagem
+            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val fileBytes = inputStream?.readBytes() ?: ByteArray(0)
+            inputStream?.close()
+
+            output.writeBytes("--$boundary\r\n")
+            output.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"evento_$eventId.jpg\"\r\n")
+            output.writeBytes("Content-Type: image/jpeg\r\n\r\n")
+            output.write(fileBytes)
+            output.writeBytes("\r\n")
+            output.writeBytes("--$boundary--\r\n")
+
+            output.flush()
+            output.close()
+
+            if (conn.responseCode !in 200..299) {
+                val err = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: "Erro desconhecido"
+                Log.e("UPLOAD_IMAGE", "Falha ao enviar imagem: ${conn.responseCode} $err")
+            } else {
+                Log.i("UPLOAD_IMAGE", "Imagem do evento $eventId atualizada com sucesso!")
+            }
+        } catch (e: Exception) {
+            Log.e("UPLOAD_IMAGE", "Erro ao enviar imagem", e)
+        } finally {
+            conn.disconnect()
+        }
     }
 }

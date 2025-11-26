@@ -16,30 +16,24 @@ object RetrofitClient {
         return token
     }
 
-    private val okHttpClient: OkHttpClient
-        get() = OkHttpClient.Builder()
-            .addInterceptor(TokenInterceptor { token })
-            .build()
+    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(TokenInterceptor { token })
+        .build()
 
-    private val retrofit: Retrofit
-        get() = Retrofit.Builder()
-            .baseUrl(ApiConfig.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(okHttpClient)
-            .build()
+    private val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl(ApiConfig.BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create())
+        .client(okHttpClient)
+        .build()
 
-    val authApi: AuthApi
-        get() = retrofit.create(AuthApi::class.java)
+    val authApi: AuthApi = retrofit.create(AuthApi::class.java)
 
-    val eventApi: EventService
-        get() = retrofit.create(EventService::class.java)
+    val bookApi: BookApi = retrofit.create(BookApi::class.java)
 
-    val bookApi: BookApi
-        get() = retrofit.create(BookApi::class.java)
+    val userApi: UserApi = retrofit.create(UserApi::class.java)
 
-    val userApi: UserApi
-        get() = retrofit.create(UserApi::class.java)
+    val rentalApi: RentalApi = retrofit.create(RentalApi::class.java)
 
-    val rentalApi: RentalApi
-        get() = retrofit.create(RentalApi::class.java)
+    // Todos os eventos e inscrições agora aqui (substitui EventService e EventApi antigo)
+    val eventApi: EventApi = retrofit.create(EventApi::class.java)
 }

@@ -10,34 +10,23 @@ import retrofit2.http.*
 
 interface BookApi {
 
-    // ====== USUÁRIO ======
-
     @GET("books")
-    fun getBooks(@Header("Authorization") token: String): Call<List<Book>>
+    fun getBooks(): Call<List<Book>>
 
     @GET("books/{id}")
-    fun getBookById(
-        @Path("id") id: String,
-        @Header("Authorization") token: String
-    ): Call<Book>
+    fun getBookById(@Path("id") id: String): Call<Book>
 
+    // VERSÃO CORRETA: SEM BODY, SEM TOKEN
     @POST("books/{id}/rent")
-    fun rentBook(
-        @Path("id") bookId: String,
-        @Body body: Map<String, String>,
-        @Header("Authorization") token: String
-    ): Call<Map<String, Boolean>>
+    fun rentBook(@Path("id") bookId: String): Call<Map<String, Boolean>>
 
     @POST("books/{id}/return")
-    fun returnBook(
-        @Path("id") bookId: String,
-        @Header("Authorization") token: String
-    ): Call<Map<String, Boolean>>
+    fun returnBook(@Path("id") bookId: String): Call<Map<String, Boolean>>
 
     @GET("books/my-rentals")
-    fun getMyRentals(@Header("Authorization") token: String): Call<List<Rental>>
+    fun getMyRentals(): Call<List<Rental>>
 
-
+    // === ADMIN ===
     @Multipart
     @POST("books")
     fun createBook(
@@ -47,20 +36,22 @@ interface BookApi {
         @Part("description") description: RequestBody,
         @Part("totalCopies") totalCopies: RequestBody,
         @Part("availableCopies") availableCopies: RequestBody,
-        @Part image: MultipartBody.Part?,
-        @Header("Authorization") token: String
+        @Part("imageUrl") imageUrl: RequestBody?     // 👈 novo campo
+        // pode deixar o @Part image: MultipartBody.Part? se quiser no futuro
     ): Call<Book>
+
 
     @PATCH("books/{id}")
     fun updateBook(
         @Path("id") bookId: String,
-        @Body dto: EditBookDto,
-        @Header("Authorization") token: String
+        @Body dto: EditBookDto
     ): Call<Book>
 
     @DELETE("books/{id}")
-    fun deleteBook(
+    fun deleteBook(@Path("id") bookId: String): Call<Map<String, Boolean>>
+    @POST("books/{id}/rent")
+    fun rentBookWithDueDate(
         @Path("id") bookId: String,
-        @Header("Authorization") token: String
+        @Body body: Map<String, String>
     ): Call<Map<String, Boolean>>
 }
