@@ -38,6 +38,9 @@ class HomeFragment : Fragment() {
     private val userApi by lazy { RetrofitClient.userApi }
     private val bookApi by lazy { RetrofitClient.bookApi }
 
+    private var recommendedBooks: List<Book> = emptyList()
+    private var userRentedBookIds: List<String> = emptyList()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -56,9 +59,21 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        rvRecommendations.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        rvRecommendations.layoutManager =
+            LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+
         rvRecommendations.adapter = RecommendationsAdapter(emptyList()) { bookId ->
-            safeToast("Livro selecionado: $bookId")
+            val book = recommendedBooks.firstOrNull { it.id == bookId } ?: return@RecommendationsAdapter
+
+            parentFragmentManager.beginTransaction()
+                .add(
+                    R.id.fragment_container,
+                    BookDetailFragment.newInstance(book, userRentedBookIds.contains(book.id)),
+                    "book_detail"
+                )
+                .hide(this)
+                .addToBackStack("book_detail")
+                .commit()
         }
     }
 
@@ -74,11 +89,11 @@ class HomeFragment : Fragment() {
 
                 txtWelcome.text = "Olá ${user.name}, bem-vindo!"
 
-                // Empréstimos ativos
                 val emprestimosAtivos = user.rentals.filter { it.returnDate == null }
                 populateLoans(emprestimosAtivos)
 
-                // Próximos eventos
+                userRentedBookIds = emprestimosAtivos.mapNotNull { it.bookId }
+
                 val eventosProximos = user.events
                     .mapNotNull { it.toEvento() }
                     .filter { isFutureEvent(it.startTime) }
@@ -87,7 +102,6 @@ class HomeFragment : Fragment() {
 
                 populateEvents(eventosProximos)
 
-                // Recomendações
                 loadRecommendations()
             }
 
@@ -113,7 +127,6 @@ class HomeFragment : Fragment() {
         createdAt = createdAt ?: "",
         updatedAt = updatedAt ?: ""
     )
-
 
     private fun isFutureEvent(dateString: String): Boolean {
         return try {
@@ -153,7 +166,6 @@ class HomeFragment : Fragment() {
             tvTitle.text = rental.book?.title ?: "Título indisponível"
             tvDue.text = "Devolução: ${formatDate(rental.dueDate)}"
 
-            // CAPA DO LIVRO
             Glide.with(itemView.context)
                 .load(rental.book?.imageUrl)
                 .placeholder(R.drawable.placeholder_book)
@@ -170,7 +182,6 @@ class HomeFragment : Fragment() {
             loansList.addView(itemView)
         }
     }
-
 
     private fun confirmBookReturn(bookId: String, title: String) {
         AlertDialog.Builder(requireContext())
@@ -218,13 +229,11 @@ class HomeFragment : Fragment() {
             override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
                 if (!response.isSuccessful) return
                 val books = response.body() ?: emptyList()
-                val recomendados = books.filter { it.availableCopies > 0 }.shuffled().take(5)
-                (rvRecommendations.adapter as? RecommendationsAdapter)?.updateBooks(recomendados)
+                recommendedBooks = books.filter { it.availableCopies > 0 }.shuffled().take(5)
+                (rvRecommendations.adapter as? RecommendationsAdapter)?.updateBooks(recommendedBooks)
             }
 
-            override fun onFailure(call: Call<List<Book>>, t: Throwable) {
-                // Silencioso
-            }
+            override fun onFailure(call: Call<List<Book>>, t: Throwable) {}
         })
     }
 
@@ -249,14 +258,12 @@ class HomeFragment : Fragment() {
         loansList.addView(tv)
     }
 
-    // Toast 100% SEGURO (nunca mais crasha)
     private fun safeToast(message: String) {
         if (isAdded && context != null && message.isNotBlank()) {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Chamado após login, devolução, etc.
     fun reload() {
         if (isAdded) {
             carregarDadosIniciais()

@@ -34,17 +34,24 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
         val btnFilter = view.findViewById<View>(R.id.btnFilter)
 
         rvBooks.layoutManager = LinearLayoutManager(requireContext())
+
         adapter = BookAdapter(allBooks, false) { action, book ->
             if (action == "detail") {
                 parentFragmentManager.beginTransaction()
-                    .replace(
+                    .add(
                         R.id.fragment_container,
-                        BookDetailFragment.newInstance(book, userRentedBookIds.contains(book.id))
+                        BookDetailFragment.newInstance(
+                            book,
+                            userRentedBookIds.contains(book.id)
+                        ),
+                        "book_detail"
                     )
-                    .addToBackStack(null)
+                    .hide(this)
+                    .addToBackStack("book_detail")
                     .commit()
             }
         }
+
         rvBooks.adapter = adapter
 
         btnFilter.setOnClickListener { showFilterDialog() }
@@ -54,7 +61,6 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
             true
         }
 
-        // Carrega tudo ao abrir
         loadUserRentalsAndBooks()
     }
 
@@ -67,9 +73,6 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
                         .filter { it.returnDate == null }
                         .mapNotNull { it.bookId }
 
-                    Log.d("CatalogUser", "Livros alugados pelo usuário: $userRentedBookIds")
-
-                    // Agora busca os livros
                     fetchBooks()
                 } else {
                     userRentedBookIds = emptyList()
@@ -110,7 +113,7 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Filtrar livros")
             .setItems(options) { _, which ->
-                showOnlyAvailable = (which == 1)
+                showOnlyAvailable = which == 1
                 applyFilterAndSearch()
             }
             .show()
@@ -135,7 +138,6 @@ class CatalogUserFragment : Fragment(R.layout.fragment_catalog) {
         adapter.updateData(filtered.toList())
     }
 
-    // Chamado após alugar/devolver um livro
     fun refreshCatalog() {
         loadUserRentalsAndBooks()
     }
