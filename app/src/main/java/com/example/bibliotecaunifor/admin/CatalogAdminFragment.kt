@@ -1,6 +1,9 @@
 package com.example.bibliotecaunifor.admin
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +11,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,14 +21,18 @@ import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.adapters.BookAdapter
 import com.example.bibliotecaunifor.api.RetrofitClient
 import com.example.bibliotecaunifor.fragment.BookDetailFragment
-import com.example.bibliotecaunifor.models.EditBookDto
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 
 class CatalogAdminFragment : Fragment() {
 
@@ -32,6 +40,38 @@ class CatalogAdminFragment : Fragment() {
     private lateinit var adapter: BookAdapter
     private lateinit var edtSearch: EditText
     private val allBooks = mutableListOf<Book>()
+
+    // Variáveis para armazenar a imagem selecionada
+    private var selectedImageUri: Uri? = null
+    private var selectedImageFile: File? = null
+
+    // Referências da view do diálogo para poder atualizar via imagePicker
+    private var dialogImgCover: ImageView? = null
+    private var dialogEdtImageUrl: EditText? = null
+
+    // Launcher para seleção de imagem
+    private val imagePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                selectedImageUri = uri
+                selectedImageFile = uriToFile(uri)
+
+                // Atualizar a pré-visualização no diálogo
+                dialogImgCover?.let { img ->
+                    Glide.with(this)
+                        .load(uri)
+                        .placeholder(R.drawable.placeholder_book)
+                        .error(R.drawable.placeholder_book)
+                        .into(img)
+                }
+
+                // Limpar o campo de URL quando uma imagem é selecionada
+                dialogEdtImageUrl?.setText("")
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -46,8 +86,8 @@ class CatalogAdminFragment : Fragment() {
         val btnAdd = view.findViewById<View>(R.id.btnAdd)
 
         rvBooks.layoutManager = LinearLayoutManager(requireContext())
-        btnAdd.visibility = View.VISIBLE
 
+        btnAdd.visibility = View.VISIBLE
         btnAdd.setOnClickListener { showAddDialog() }
         btnFilter.setOnClickListener { showFilterDialog() }
 
@@ -62,6 +102,7 @@ class CatalogAdminFragment : Fragment() {
                     .replace(R.id.admin_container, BookDetailFragment.newInstance(book, true))
                     .addToBackStack(null)
                     .commit()
+
                 "edit" -> showAddDialog(book)
                 "remove" -> removeBook(book)
                 "toggleEmprestimo" -> {
@@ -72,8 +113,8 @@ class CatalogAdminFragment : Fragment() {
                 }
             }
         }
-        rvBooks.adapter = adapter
 
+        rvBooks.adapter = adapter
         fetchBooks()
     }
 
@@ -104,7 +145,6 @@ class CatalogAdminFragment : Fragment() {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Filtrar livros")
             .setItems(options) { _, _ ->
-                // Por enquanto só reaplica pesquisa
                 applyFilterAndSearch()
             }
             .show()
@@ -122,8 +162,11 @@ class CatalogAdminFragment : Fragment() {
     }
 
     private fun showAddDialog(book: Book? = null) {
-        val layout = layoutInflater.inflate(R.layout.dialog_add_book, null)
+        // Resetar seleção de imagem
+        selectedImageUri = null
+        selectedImageFile = null
 
+        val layout = layoutInflater.inflate(R.layout.dialog_add_book, null)
         val edtTitulo = layout.findViewById<EditText>(R.id.edtTitulo)
         val edtAutor = layout.findViewById<EditText>(R.id.edtAutor)
         val edtIsbn = layout.findViewById<EditText>(R.id.edtIsbn)
@@ -134,7 +177,11 @@ class CatalogAdminFragment : Fragment() {
         val imgCover = layout.findViewById<ImageView>(R.id.imgCover)
         val btnSelectImage = layout.findViewById<Button>(R.id.btnSelectImage)
 
-        // placeholder inicial
+        // Guardar refs globais pro imagePicker usar
+        dialogImgCover = imgCover
+        dialogEdtImageUrl = edtImageUrl
+
+        // Placeholder inicial
         imgCover.setImageResource(R.drawable.placeholder_book)
 
         if (book != null) {
@@ -151,17 +198,25 @@ class CatalogAdminFragment : Fragment() {
             }
         }
 
-        // agora esse botão serve para PRÉ-VISUALIZAR a URL digitada
+        // Botão para selecionar imagem da galeria
         btnSelectImage.setOnClickListener {
-            val url = edtImageUrl.text.toString().trim()
-            if (url.isBlank()) {
-                Toast.makeText(requireContext(), "Informe a URL da imagem primeiro", Toast.LENGTH_SHORT).show()
-            } else {
-                Glide.with(this)
-                    .load(url)
-                    .placeholder(R.drawable.placeholder_book)
-                    .error(R.drawable.placeholder_book)
-                    .into(imgCover)
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            imagePickerLauncher.launch(intent)
+        }
+
+        // Listener para pré-visualizar URL (quando não houver arquivo selecionado)
+        edtImageUrl.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus && selectedImageFile == null) {
+                val url = edtImageUrl.text.toString().trim()
+                if (url.isNotBlank()) {
+                    Glide.with(this)
+                        .load(url)
+                        .placeholder(R.drawable.placeholder_book)
+                        .error(R.drawable.placeholder_book)
+                        .into(imgCover)
+                } else {
+                    imgCover.setImageResource(R.drawable.placeholder_book)
+                }
             }
         }
 
@@ -182,9 +237,38 @@ class CatalogAdminFragment : Fragment() {
                 } else {
                     updateBook(book.id, title, author, isbn, description, total, available, imageUrl)
                 }
+
+                // limpar refs do diálogo
+                dialogImgCover = null
+                dialogEdtImageUrl = null
             }
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton("Cancelar") { _, _ ->
+                // Limpar seleção ao cancelar
+                selectedImageUri = null
+                selectedImageFile = null
+                dialogImgCover = null
+                dialogEdtImageUrl = null
+            }
             .show()
+    }
+
+    private fun uriToFile(uri: Uri): File? {
+        return try {
+            val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)
+            val file = File(requireContext().cacheDir, "temp_image_${System.currentTimeMillis()}.jpg")
+            val outputStream = FileOutputStream(file)
+
+            inputStream?.use { input ->
+                outputStream.use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            file
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     private fun createBook(
@@ -201,15 +285,24 @@ class CatalogAdminFragment : Fragment() {
             return
         }
 
-        val mediaType = "text/plain".toMediaType()
+        val mediaType = "text/plain".toMediaTypeOrNull()
 
+        // Preparar campos como RequestBody
         val titlePart: RequestBody = title.toRequestBody(mediaType)
         val authorPart: RequestBody = author.toRequestBody(mediaType)
         val isbnPart: RequestBody = isbn.toRequestBody(mediaType)
         val descPart: RequestBody = description.toRequestBody(mediaType)
         val totalPart: RequestBody = totalCopies.toRequestBody(mediaType)
         val availPart: RequestBody = availableCopies.toRequestBody(mediaType)
-        val imageUrlPart: RequestBody? = if (imageUrl.isNotBlank()) {
+
+        // Preparar arquivo de imagem (se houver) ou URL
+        val imagePart: MultipartBody.Part? = selectedImageFile?.let { file ->
+            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+            MultipartBody.Part.createFormData("image", file.name, requestFile)
+        }
+
+        // Se não houver arquivo mas houver URL, enviar URL como campo normal
+        val imageUrlPart: RequestBody? = if (imagePart == null && imageUrl.isNotBlank()) {
             imageUrl.toRequestBody(mediaType)
         } else {
             null
@@ -222,7 +315,8 @@ class CatalogAdminFragment : Fragment() {
             descPart,
             totalPart,
             availPart,
-            imageUrlPart
+            imagePart,   // Arquivo como MultipartBody.Part
+            imageUrlPart // URL (apenas se não houver arquivo)
         ).enqueue(object : Callback<Book> {
             override fun onResponse(call: Call<Book>, response: Response<Book>) {
                 if (response.isSuccessful && response.body() != null) {
@@ -231,12 +325,18 @@ class CatalogAdminFragment : Fragment() {
                         "Livro cadastrado com sucesso!",
                         Toast.LENGTH_SHORT
                     ).show()
+
+                    // Limpar seleção
+                    selectedImageUri = null
+                    selectedImageFile = null
+
                     fetchBooks()
                 } else {
+                    val errorBody = response.errorBody()?.string()
                     Toast.makeText(
                         requireContext(),
-                        "Erro ao cadastrar livro (${response.code()})",
-                        Toast.LENGTH_SHORT
+                        "Erro ao cadastrar livro (${response.code()}): $errorBody",
+                        Toast.LENGTH_LONG
                     ).show()
                 }
             }
@@ -244,7 +344,7 @@ class CatalogAdminFragment : Fragment() {
             override fun onFailure(call: Call<Book>, t: Throwable) {
                 Toast.makeText(
                     requireContext(),
-                    "Falha de conexão ao cadastrar",
+                    "Falha de conexão ao cadastrar: ${t.message}",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -261,42 +361,77 @@ class CatalogAdminFragment : Fragment() {
         availableCopies: String,
         imageUrl: String
     ) {
-        val dto = EditBookDto(
-            title = title,
-            author = author,
-            isbn = isbn,
-            description = description,
-            totalCopies = totalCopies.toIntOrNull(),
-            availableCopies = availableCopies.toIntOrNull()
-        )
+        val mediaType = "text/plain".toMediaTypeOrNull()
 
-        RetrofitClient.bookApi.updateBook(bookId, dto)
-            .enqueue(object : Callback<Book> {
-                override fun onResponse(call: Call<Book>, response: Response<Book>) {
-                    if (response.isSuccessful) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Livro atualizado!",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        fetchBooks()
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Erro ao atualizar livro (${response.code()})",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
+        // Preparar campos como RequestBody (apenas se não estiverem em branco)
+        val titlePart: RequestBody? = title.takeIf { it.isNotBlank() }?.toRequestBody(mediaType)
+        val authorPart: RequestBody? = author.takeIf { it.isNotBlank() }?.toRequestBody(mediaType)
+        val isbnPart: RequestBody? = isbn.takeIf { it.isNotBlank() }?.toRequestBody(mediaType)
+        val descPart: RequestBody? = description.takeIf { it.isNotBlank() }?.toRequestBody(mediaType)
 
-                override fun onFailure(call: Call<Book>, t: Throwable) {
+        val totalPart: RequestBody? =
+            totalCopies.takeIf { it.isNotBlank() }?.toIntOrNull()
+                ?.let { it.toString().toRequestBody(mediaType) }
+
+        val availPart: RequestBody? =
+            availableCopies.takeIf { it.isNotBlank() }?.toIntOrNull()
+                ?.let { it.toString().toRequestBody(mediaType) }
+
+        // Preparar arquivo de imagem (se houver)
+        val imagePart: MultipartBody.Part? = selectedImageFile?.let { file ->
+            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+            MultipartBody.Part.createFormData("image", file.name, requestFile)
+        }
+
+        // Se não houver arquivo mas houver URL, enviar URL
+        val imageUrlPart: RequestBody? = if (imagePart == null && imageUrl.isNotBlank()) {
+            imageUrl.toRequestBody(mediaType)
+        } else {
+            null
+        }
+
+        RetrofitClient.bookApi.updateBook(
+            bookId,
+            titlePart,
+            authorPart,
+            isbnPart,
+            descPart,
+            totalPart,
+            availPart,
+            imagePart,   // Arquivo como MultipartBody.Part
+            imageUrlPart // URL (apenas se não houver arquivo)
+        ).enqueue(object : Callback<Book> {
+            override fun onResponse(call: Call<Book>, response: Response<Book>) {
+                if (response.isSuccessful) {
                     Toast.makeText(
                         requireContext(),
-                        "Falha de conexão ao atualizar",
+                        "Livro atualizado!",
                         Toast.LENGTH_SHORT
                     ).show()
+
+                    // Limpar seleção
+                    selectedImageUri = null
+                    selectedImageFile = null
+
+                    fetchBooks()
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Toast.makeText(
+                        requireContext(),
+                        "Erro ao atualizar livro (${response.code()}): $errorBody",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-            })
+            }
+
+            override fun onFailure(call: Call<Book>, t: Throwable) {
+                Toast.makeText(
+                    requireContext(),
+                    "Falha de conexão ao atualizar: ${t.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        })
     }
 
     private fun removeBook(book: Book) {
@@ -343,6 +478,6 @@ class CatalogAdminFragment : Fragment() {
     }
 
     companion object {
-        // não precisamos mais de REQUEST_CODE_IMAGE, mas deixei o companion vazio
+        // Companion vazio
     }
 }
