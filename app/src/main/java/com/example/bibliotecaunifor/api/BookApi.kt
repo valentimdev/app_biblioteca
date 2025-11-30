@@ -1,7 +1,6 @@
 package com.example.bibliotecaunifor.api
 
 import com.example.bibliotecaunifor.Book
-import com.example.bibliotecaunifor.models.EditBookDto
 import com.example.bibliotecaunifor.models.Rental
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -14,19 +13,9 @@ interface BookApi {
     fun getBooks(): Call<List<Book>>
 
     @GET("books/{id}")
-    fun getBookById(@Path("id") id: String): Call<Book>
+    fun getBook(@Path("id") id: String): Call<Book>
 
-    // VERSÃO CORRETA: SEM BODY, SEM TOKEN
-    @POST("books/{id}/rent")
-    fun rentBook(@Path("id") bookId: String): Call<Map<String, Boolean>>
-
-    @POST("books/{id}/return")
-    fun returnBook(@Path("id") bookId: String): Call<Map<String, Boolean>>
-
-    @GET("books/my-rentals")
-    fun getMyRentals(): Call<List<Rental>>
-
-    // === ADMIN ===
+    // Criar livro com ou sem imagem
     @Multipart
     @POST("books")
     fun createBook(
@@ -36,22 +25,42 @@ interface BookApi {
         @Part("description") description: RequestBody,
         @Part("totalCopies") totalCopies: RequestBody,
         @Part("availableCopies") availableCopies: RequestBody,
-        @Part("imageUrl") imageUrl: RequestBody?     // 👈 novo campo
-        // pode deixar o @Part image: MultipartBody.Part? se quiser no futuro
+        @Part image: MultipartBody.Part? = null,              // arquivo opcional
+        @Part("imageUrl") imageUrl: RequestBody? = null       // URL opcional (se não tiver arquivo)
     ): Call<Book>
 
-
+    // Atualizar livro (PATCH) com ou sem imagem nova
+    @Multipart
     @PATCH("books/{id}")
     fun updateBook(
-        @Path("id") bookId: String,
-        @Body dto: EditBookDto
+        @Path("id") id: String,
+        @Part("title") title: RequestBody?,
+        @Part("author") author: RequestBody?,
+        @Part("isbn") isbn: RequestBody?,
+        @Part("description") description: RequestBody?,
+        @Part("totalCopies") totalCopies: RequestBody?,
+        @Part("availableCopies") availableCopies: RequestBody?,
+        @Part image: MultipartBody.Part? = null,              // arquivo opcional
+        @Part("imageUrl") imageUrl: RequestBody? = null       // URL opcional
     ): Call<Book>
 
     @DELETE("books/{id}")
-    fun deleteBook(@Path("id") bookId: String): Call<Map<String, Boolean>>
+    fun deleteBook(@Path("id") id: String): Call<Map<String, Boolean>>
+
+    // ✅ Alugar livro com data de devolução
     @POST("books/{id}/rent")
     fun rentBookWithDueDate(
-        @Path("id") bookId: String,
+        @Path("id") id: String,
         @Body body: Map<String, String>
     ): Call<Map<String, Boolean>>
+
+    // ✅ Devolver livro
+    @POST("books/{id}/return")
+    fun returnBook(
+        @Path("id") id: String
+    ): Call<Map<String, Boolean>>
+
+    // ✅ Buscar alugueis do usuário logado
+    @GET("rentals/my")
+    fun getMyRentals(): Call<List<Rental>>
 }
