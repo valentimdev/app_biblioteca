@@ -29,11 +29,7 @@ class AdminActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.apply {
             title = "Painel Administrativo"
-            setDisplayHomeAsUpEnabled(true)
         }
-        toolbar.navigationIcon =
-            AppCompatResources.getDrawable(this, R.drawable.baseline_arrow_back_24)
-        toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
         if (savedInstanceState == null) {
             replace(AdminHomeFragment())
