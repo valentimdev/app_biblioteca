@@ -3,9 +3,13 @@ package com.example.bibliotecaunifor
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.example.bibliotecaunifor.api.RetrofitClient
 import com.example.bibliotecaunifor.databinding.ActivityConfiguracoesBinding
+import com.example.bibliotecaunifor.models.ChangePasswordRequest
+import com.example.bibliotecaunifor.models.ChangePasswordResponse
 import com.example.bibliotecaunifor.utils.AuthUtils
 import com.google.android.material.button.MaterialButton
 
@@ -60,21 +64,88 @@ class ConfiguracoesActivity : AppCompatActivity() {
 
     private fun showAlterarSenhaDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_alterar_senha, null)
+
+        val etSenhaAtual = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSenhaAtual)
+        val etSenhaNova = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSenhaNova)
+        val etSenhaConfirmacao = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etSenhaConfirmacao)
+        val btnAlterar = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnAlterar)
+
         val builder = AlertDialog.Builder(this)
             .setView(dialogView)
             .setCancelable(true)
 
         val alertDialog = builder.create()
-        val btnAlterar = dialogView.findViewById<MaterialButton>(R.id.btnAlterar)
 
         btnAlterar.setOnClickListener {
-            // futuramente lógica de alterar a senha será aqui
-            alertDialog.dismiss()
+            val current = etSenhaAtual.text?.toString()?.trim() ?: ""
+            val nova = etSenhaNova.text?.toString()?.trim() ?: ""
+            val confirm = etSenhaConfirmacao.text?.toString()?.trim() ?: ""
+
+            // validações básicas
+            if (current.isEmpty() || nova.isEmpty() || confirm.isEmpty()) {
+                Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (nova.length < 6) {
+                Toast.makeText(this, "A nova senha deve ter pelo menos 6 caracteres", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (nova != confirm) {
+                Toast.makeText(this, "A confirmação da senha não confere", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val body = com.example.bibliotecaunifor.models.ChangePasswordRequest(
+                currentPassword = current,
+                newPassword = nova
+            )
+
+            RetrofitClient.authApi.changePassword(body)
+                .enqueue(object : retrofit2.Callback<com.example.bibliotecaunifor.models.ChangePasswordResponse> {
+                    override fun onResponse(
+                        call: retrofit2.Call<com.example.bibliotecaunifor.models.ChangePasswordResponse>,
+                        response: retrofit2.Response<com.example.bibliotecaunifor.models.ChangePasswordResponse>
+                    ) {
+                        if (response.isSuccessful && response.body()?.success == true) {
+                            Toast.makeText(
+                                this@ConfiguracoesActivity,
+                                "Senha alterada com sucesso!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            alertDialog.dismiss()
+                        } else {
+                            val msg = when (response.code()) {
+                                400 -> "Dados inválidos. Verifique as informações."
+                                403 -> "Senha atual incorreta."
+                                else -> "Erro ao alterar senha. Tente novamente."
+                            }
+                            Toast.makeText(
+                                this@ConfiguracoesActivity,
+                                msg,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+
+                    override fun onFailure(
+                        call: retrofit2.Call<com.example.bibliotecaunifor.models.ChangePasswordResponse>,
+                        t: Throwable
+                    ) {
+                        Toast.makeText(
+                            this@ConfiguracoesActivity,
+                            "Falha de conexão: ${t.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                })
         }
 
         alertDialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         alertDialog.show()
     }
+
 
     private fun showLogoutDialog() {
         AlertDialog.Builder(this)

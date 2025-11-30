@@ -85,7 +85,6 @@ class AdminEventsFragment : Fragment() {
                         }
 
                         "Permitir Inscrição" -> {
-                            // Abrir/fechar inscrição usando registrationStartTime / registrationEndTime
                             val iso = SimpleDateFormat(
                                 "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
                                 Locale.getDefault()
@@ -143,7 +142,8 @@ class AdminEventsFragment : Fragment() {
             .show()
     }
 
-    // MÁSCARA DE DATA
+    // =============== MÁSCARAS ===============
+
     private fun aplicarMascaraData(editText: TextInputEditText) {
         editText.addTextChangedListener(object : TextWatcher {
             var isUpdating = false
@@ -171,7 +171,6 @@ class AdminEventsFragment : Fragment() {
         })
     }
 
-    // MÁSCARA DE HORÁRIO
     private fun aplicarMascaraHorario(editText: TextInputEditText) {
         editText.addTextChangedListener(object : TextWatcher {
             var isUpdating = false
@@ -201,30 +200,39 @@ class AdminEventsFragment : Fragment() {
         })
     }
 
+    // =============== FUSO HORÁRIO: LOCAL -> UTC ===============
+
     private fun formatarISO(dataStr: String, horaStr: String): String? {
         val dataLimpa = dataStr.replace("-", "").trim()
         val horaLimpa = horaStr.replace(":", "").trim().padStart(4, '0').take(4)
 
         if (dataLimpa.length != 8 || horaLimpa.length != 4) return null
 
-        val inputStr = "${dataLimpa.substring(0, 2)}-${dataLimpa.substring(2, 4)}-${dataLimpa.substring(4, 8)} " +
-                "${horaLimpa.substring(0, 2)}:${horaLimpa.substring(2, 4)}"
+        // dd-MM-yyyy HH:mm
+        val inputStr =
+            "${dataLimpa.substring(0, 2)}-${dataLimpa.substring(2, 4)}-${dataLimpa.substring(4, 8)} " +
+                    "${horaLimpa.substring(0, 2)}:${horaLimpa.substring(2, 4)}"
 
         return try {
+            // 1) interpreta como HORÁRIO LOCAL (Fortaleza = UTC-3, por ex)
             val inFmt = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault()).apply {
+                timeZone = TimeZone.getDefault()
+            }
+
+            // 2) converte para ISO em UTC
+            val outFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
                 timeZone = TimeZone.getTimeZone("UTC")
             }
-            val outFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
-                timeZone = TimeZone.getTimeZone("UTC")
-            }
-            outFmt.format(inFmt.parse(inputStr)!!)
+
+            val date = inFmt.parse(inputStr)!!
+            outFmt.format(date)
         } catch (e: Exception) {
             Log.e("FORMAT_ISO", "Erro ao formatar: $inputStr", e)
             null
         }
     }
 
-    // ==== helper: agora em ISO UTC para registrationStartTime ====
+    // ==== helper: agora em ISO UTC (se precisar) ====
     private fun agoraIsoUtc(): String {
         val fmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
         fmt.timeZone = TimeZone.getTimeZone("UTC")
@@ -234,7 +242,42 @@ class AdminEventsFragment : Fragment() {
     private fun obterSeats(edt: TextInputEditText): Int =
         edt.text.toString().trim().toIntOrNull()?.coerceAtLeast(1) ?: 1
 
+    // =============== UTC -> HORÁRIO LOCAL (pra editar) ===============
+
+    private fun preencherCamposComIso(
+        iso: String,
+        edtData: TextInputEditText,
+        edtHora: TextInputEditText
+    ) {
+        try {
+            // tenta com milissegundos primeiro
+            val isoFmtComMs = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            val isoFmtSemMs = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+
+            val date = try {
+                isoFmtComMs.parse(iso)
+            } catch (_: Exception) {
+                isoFmtSemMs.parse(iso)
+            }
+
+            if (date != null) {
+                val outData = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+                val outHora = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+                edtData.setText(outData.format(date))
+                edtHora.setText(outHora.format(date))
+            }
+        } catch (e: Exception) {
+            Log.e("PARSE_ISO", "Erro ao converter ISO: $iso", e)
+        }
+    }
+
     // ====================== EDITAR EVENTO ======================
+
     private fun mostrarDialogEditar(evento: AdminEvento) {
         selectedImageUri = null
         val dlgView = layoutInflater.inflate(R.layout.dialog_admin_evento, null)
@@ -260,17 +303,12 @@ class AdminEventsFragment : Fragment() {
         edtDescricao.setText(evento.description ?: "")
         switchDisabled.isChecked = evento.isDisabled
 
-        evento.eventStartTime.split("T").let {
-            val d = it[0].split("-")
-            edtDataInicio.setText("${d[2]}-${d[1]}-${d[0]}")
-            edtHorarioInicio.setText(it[1].removeSuffix("Z").substring(0, 5))
-        }
+        // Preenche datas/horários convertendo de UTC para LOCAL
+        preencherCamposComIso(evento.eventStartTime, edtDataInicio, edtHorarioInicio)
 
-        evento.eventEndTime?.takeIf { it.isNotBlank() }?.split("T")?.let {
-            val d = it[0].split("-")
-            edtDataFim.setText("${d[2]}-${d[1]}-${d[0]}")
-            edtHorarioFim.setText(it[1].removeSuffix("Z").substring(0, 5))
-        }
+        evento.eventEndTime
+            ?.takeIf { it.isNotBlank() }
+            ?.let { preencherCamposComIso(it, edtDataFim, edtHorarioFim) }
 
         evento.imageUrl?.let { Glide.with(this).load(it).into(imgPreview!!) }
 
@@ -345,6 +383,7 @@ class AdminEventsFragment : Fragment() {
     }
 
     // ====================== ADICIONAR EVENTO ======================
+
     private fun mostrarDialogAdicionar() {
         selectedImageUri = null
         val dlgView = layoutInflater.inflate(R.layout.dialog_admin_evento, null)

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View   // 👈 ADD ISSO
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -57,7 +58,6 @@ class MainActivity : AppCompatActivity() {
             configureToolbarFor(homeFragment)
         }
 
-        // Navegação principal
         bottom.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> switchTo(homeFragment, "home")
@@ -72,7 +72,6 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // Re-selecionar mesma aba
         bottom.setOnItemReselectedListener { item ->
             when (item.itemId) {
                 R.id.nav_profile -> {
@@ -86,7 +85,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 🔔 pedir permissão de notificação (Android 13+)
         pedirPermissaoNotificacoesSePrecisar()
     }
 
@@ -115,8 +113,7 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (requestCode == REQ_POST_NOTIFICATIONS) {
-            // Se quiser, você pode tratar aceito / negado aqui
-            // por enquanto não é obrigatório fazer nada
+            // Se quiser tratar aceito / negado depois
         }
     }
 
@@ -160,5 +157,15 @@ class MainActivity : AppCompatActivity() {
     fun refreshHomeFragment() {
         val home = supportFragmentManager.findFragmentByTag("home") as? HomeFragment
         home?.reload()
+    }
+
+    // 👇👇👇 ADICIONAR ISSO AQUI EMBAIXO
+
+    fun hideBottomNav() {
+        bottom.visibility = View.GONE
+    }
+
+    fun showBottomNav() {
+        bottom.visibility = View.VISIBLE
     }
 }

@@ -19,6 +19,7 @@ import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
+
 class BookDetailFragment : Fragment() {
 
     private lateinit var book: Book
@@ -44,11 +45,16 @@ class BookDetailFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View = inflater.inflate(R.layout.fragment_book_detail, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Esconde o BottomNavigation só nessa tela
+        (activity as? MainActivity)?.hideBottomNav()
 
         val txtTitle = view.findViewById<TextView>(R.id.txtTitle)
         val txtAuthor = view.findViewById<TextView>(R.id.txtAuthor)
@@ -57,6 +63,12 @@ class BookDetailFragment : Fragment() {
         val txtCopies = view.findViewById<TextView>(R.id.txtTotalCopies)
         val txtRentedWarning = view.findViewById<TextView>(R.id.txtRentedWarning)
         val btnAction = view.findViewById<Button>(R.id.btnAction)
+        val btnBack = view.findViewById<Button>(R.id.btnBack)
+
+        // Botão de voltar
+        btnBack.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
 
         // Preenche os dados
         txtTitle.text = book.title
@@ -73,7 +85,7 @@ class BookDetailFragment : Fragment() {
             txtRentedWarning.visibility = View.GONE
         }
 
-        // Configura botão
+        // Configura botão de ação
         when {
             userHasRental -> {
                 btnAction.text = "DEVOLVER AGORA"
@@ -89,11 +101,19 @@ class BookDetailFragment : Fragment() {
             }
         }
     }
+
+    override fun onDestroyView() {
+        // Mostra o BottomNavigation de novo ao sair da tela de detalhes
+        (activity as? MainActivity)?.showBottomNav()
+        super.onDestroyView()
+    }
+
     private fun safeToast(message: String) {
         if (isAdded && context != null && message.isNotBlank()) {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
     }
+
     private fun rentBook() {
         // Gera a data de devolução: hoje + 7 dias (formato ISO UTC)
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -117,7 +137,7 @@ class BookDetailFragment : Fragment() {
                     } else {
                         val errorMsg = when (response.code()) {
                             400 -> "Livro indisponível ou já alugado por você"
-                            403 ->"Você já possui este livro alugado"
+                            403 -> "Você já possui este livro alugado"
                             else -> "Erro ao alugar. Tente novamente."
                         }
                         safeToast(errorMsg)
@@ -131,20 +151,25 @@ class BookDetailFragment : Fragment() {
     }
 
     private fun returnBook() {
-        RetrofitClient.bookApi.returnBook(book.id).enqueue(object : Callback<Map<String, Boolean>> {
-            override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) {
-                if (response.isSuccessful && response.body()?.get("success") == true) {
-                    safeToast("Livro devolvido com sucesso!")
-                    parentFragmentManager.popBackStack()
-                    refreshOtherFragments()
-                } else {
-                    safeToast("Erro ao devolver")
+        RetrofitClient.bookApi.returnBook(book.id)
+            .enqueue(object : Callback<Map<String, Boolean>> {
+                override fun onResponse(
+                    call: Call<Map<String, Boolean>>,
+                    response: Response<Map<String, Boolean>>
+                ) {
+                    if (response.isSuccessful && response.body()?.get("success") == true) {
+                        safeToast("Livro devolvido com sucesso!")
+                        parentFragmentManager.popBackStack()
+                        refreshOtherFragments()
+                    } else {
+                        safeToast("Erro ao devolver")
+                    }
                 }
-            }
-            override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
-                safeToast("Sem conexão")
-            }
-        })
+
+                override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
+                    safeToast("Sem conexão")
+                }
+            })
     }
 
     private fun updateUiAfterRent() {
