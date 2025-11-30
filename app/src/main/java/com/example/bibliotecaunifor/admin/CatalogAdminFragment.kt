@@ -49,6 +49,9 @@ class CatalogAdminFragment : Fragment() {
     private var dialogImgCover: ImageView? = null
     private var dialogEdtImageUrl: EditText? = null
 
+    // Limite de 5 MB para imagem
+    private val MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024
+
     // Launcher para seleção de imagem
     private val imagePickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -271,6 +274,27 @@ class CatalogAdminFragment : Fragment() {
         }
     }
 
+    // 🔹 Helper pra descobrir o MIME type correto com base na extensão do File
+    private fun getImageMimeType(file: File): String {
+        val extension = file.extension.lowercase()
+        return when (extension) {
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "webp" -> "image/webp"
+            else -> "image/jpeg" // fallback
+        }
+    }
+
+    // 🔹 Popup amigável para imagem muito grande
+    private fun showImageTooLargeError() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Imagem muito grande")
+            .setMessage("A imagem precisa ter no máximo 5 MB. Escolha uma imagem menor ou comprima antes de enviar.")
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
     private fun createBook(
         title: String,
         author: String,
@@ -285,6 +309,14 @@ class CatalogAdminFragment : Fragment() {
             return
         }
 
+        // 🔹 Validação de tamanho no front antes de enviar
+        selectedImageFile?.let { file ->
+            if (file.length() > MAX_IMAGE_SIZE_BYTES) {
+                showImageTooLargeError()
+                return
+            }
+        }
+
         val mediaType = "text/plain".toMediaTypeOrNull()
 
         // Preparar campos como RequestBody
@@ -297,7 +329,8 @@ class CatalogAdminFragment : Fragment() {
 
         // Preparar arquivo de imagem (se houver) ou URL
         val imagePart: MultipartBody.Part? = selectedImageFile?.let { file ->
-            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+            val mimeType = getImageMimeType(file)
+            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
             MultipartBody.Part.createFormData("image", file.name, requestFile)
         }
 
@@ -333,11 +366,22 @@ class CatalogAdminFragment : Fragment() {
                     fetchBooks()
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Toast.makeText(
-                        requireContext(),
-                        "Erro ao cadastrar livro (${response.code()}): $errorBody",
-                        Toast.LENGTH_LONG
-                    ).show()
+
+                    // 🔹 Tratamento especial se o backend também reclamar de tamanho
+                    val isImageTooLarge =
+                        response.code() == 413 ||
+                                (errorBody?.contains("File too large", ignoreCase = true) == true) ||
+                                (errorBody?.contains("file size", ignoreCase = true) == true)
+
+                    if (isImageTooLarge) {
+                        showImageTooLargeError()
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Erro ao cadastrar livro (${response.code()}): $errorBody",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
 
@@ -363,6 +407,14 @@ class CatalogAdminFragment : Fragment() {
     ) {
         val mediaType = "text/plain".toMediaTypeOrNull()
 
+        // 🔹 Validação de tamanho no front antes de enviar
+        selectedImageFile?.let { file ->
+            if (file.length() > MAX_IMAGE_SIZE_BYTES) {
+                showImageTooLargeError()
+                return
+            }
+        }
+
         // Preparar campos como RequestBody (apenas se não estiverem em branco)
         val titlePart: RequestBody? = title.takeIf { it.isNotBlank() }?.toRequestBody(mediaType)
         val authorPart: RequestBody? = author.takeIf { it.isNotBlank() }?.toRequestBody(mediaType)
@@ -379,7 +431,8 @@ class CatalogAdminFragment : Fragment() {
 
         // Preparar arquivo de imagem (se houver)
         val imagePart: MultipartBody.Part? = selectedImageFile?.let { file ->
-            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+            val mimeType = getImageMimeType(file)
+            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
             MultipartBody.Part.createFormData("image", file.name, requestFile)
         }
 
@@ -416,11 +469,21 @@ class CatalogAdminFragment : Fragment() {
                     fetchBooks()
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Toast.makeText(
-                        requireContext(),
-                        "Erro ao atualizar livro (${response.code()}): $errorBody",
-                        Toast.LENGTH_LONG
-                    ).show()
+
+                    val isImageTooLarge =
+                        response.code() == 413 ||
+                                (errorBody?.contains("File too large", ignoreCase = true) == true) ||
+                                (errorBody?.contains("file size", ignoreCase = true) == true)
+
+                    if (isImageTooLarge) {
+                        showImageTooLargeError()
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Erro ao atualizar livro (${response.code()}): $errorBody",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
 
