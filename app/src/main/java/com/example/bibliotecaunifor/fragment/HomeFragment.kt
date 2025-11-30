@@ -43,6 +43,9 @@ class HomeFragment : Fragment() {
     // livros recomendados carregados da API (pra abrir o detalhe depois)
     private var recommendedBooks: List<Book> = emptyList()
 
+    private var recommendedBooks: List<Book> = emptyList()
+    private var userRentedBookIds: List<String> = emptyList()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -90,11 +93,11 @@ class HomeFragment : Fragment() {
 
                 txtWelcome.text = "Olá ${user.name}, bem-vindo!"
 
-                // Empréstimos ativos
                 val emprestimosAtivos = user.rentals.filter { it.returnDate == null }
                 populateLoans(emprestimosAtivos)
 
-                // Próximos eventos
+                userRentedBookIds = emprestimosAtivos.mapNotNull { it.bookId }
+
                 val eventosProximos = user.events
                     .mapNotNull { it.toEvento() }
                     .filter { isFutureEvent(it.startTime) }
@@ -103,7 +106,6 @@ class HomeFragment : Fragment() {
 
                 populateEvents(eventosProximos)
 
-                // Recomendações
                 loadRecommendations()
             }
 
@@ -316,9 +318,7 @@ class HomeFragment : Fragment() {
                     ?.updateBooks(recomendados)
             }
 
-            override fun onFailure(call: Call<List<Book>>, t: Throwable) {
-                // Silencioso
-            }
+            override fun onFailure(call: Call<List<Book>>, t: Throwable) {}
         })
     }
 
