@@ -51,52 +51,25 @@ class ConfiguracoesActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Regulamento da Biblioteca")
             .setMessage(
-                """
-            1. Cadastro e acesso
-            - O uso da biblioteca é permitido a alunos e colaboradores regularmente cadastrados.
-            - O acesso ao sistema é pessoal e intransferível. Não compartilhe sua matrícula ou senha.
-
-            2. Empréstimo de livros
-            - Cada usuário pode manter um número limitado de livros em empréstimo simultâneo, conforme regras da instituição.
-            - O empréstimo é de uso exclusivo do usuário cadastrado e não deve ser repassado a terceiros.
-
-            3. Prazos e renovação
-            - O prazo padrão de empréstimo é de 7 (sete) dias corridos, salvo orientações específicas da biblioteca.
-            - A renovação pode ser feita se:
-              • o livro não estiver reservado por outro usuário; e
-              • não houver atraso no empréstimo atual.
-            - A biblioteca pode alterar prazos em períodos especiais (férias, recesso, etc.).
-
-            4. Atrasos e penalidades
-            - Em caso de atraso na devolução, poderão ser aplicadas sanções como:
-              • suspensão temporária de novos empréstimos; e/ou
-              • outras penalidades definidas pela biblioteca.
-            - Em caso de perda ou dano do exemplar, o usuário será responsável pela reposição
-              do livro ou por outra forma de compensação definida pela biblioteca.
-
-            5. Conservação do acervo
-            - É proibido escrever, rasurar, amassar, arrancar páginas ou danificar qualquer material da biblioteca.
-            - Não use alimentos ou bebidas próximos aos livros para evitar danos.
-
-            6. Uso do espaço da biblioteca
-            - Mantenha silêncio e respeito aos demais usuários.
-            - O uso de celular deve ser discreto e com som desligado.
-            - Não é permitido reservar lugares deixando materiais pessoais sem uso por longos períodos.
-
-            7. Disposições gerais
-            - O não cumprimento deste regulamento pode acarretar suspensão de empréstimos
-              e outras medidas administrativas.
-            - Situações não previstas neste regulamento serão avaliadas pela equipe da biblioteca.
-
-            Ao utilizar a biblioteca física ou digital, você declara estar ciente e de acordo com estas regras.
-            """.trimIndent()
+                        "1. EMPRÉSTIMO DE LIVROS\n" +
+                        "• O empréstimo de livros é permitido apenas para usuários devidamente cadastrados.\n" +
+                        "• Cada usuário pode ter múltiplos livros com empréstimo.\n" +
+                        "• O prazo padrão para devolução é de 7 (sete) dias, podendo ser renovado uma vez, caso não haja reserva.\n" +
+                        "• Atrasos na devolução implicam bloqueio temporário para novos empréstimos.\n\n" +
+                        "2. AGENDAMENTO DE EVENTOS\n" +
+                        "• O agendamento de eventos deve ser realizado exclusivamente pelo sistema da biblioteca.\n" +
+                        "• Eventos estão sujeitos à disponibilidade de espaço e aprovação da administração.\n" +
+                        "• O cancelamento deve ser feito com no mínimo 24 horas de antecedência.\n\n" +
+                        "3. DISPOSIÇÕES GERAIS\n" +
+                        "• É responsabilidade do usuário zelar pela conservação do material emprestado.\n" +
+                        "• O não cumprimento deste regulamento poderá acarretar advertências ou suspensão do acesso aos serviços.\n"
             )
-            .setPositiveButton("Entendi") { dialog, _ ->
+            .setPositiveButton("FECHAR") { dialog, _ ->
                 dialog.dismiss()
             }
+            .setCancelable(true)
             .show()
     }
-
 
     private fun showAlterarSenhaDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_alterar_senha, null)

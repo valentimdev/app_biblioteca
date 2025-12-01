@@ -13,12 +13,12 @@
 
     <item
         android:id="@+id/nav_events"
-        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:icon="@drawable/eventosicon"
         android:title="Eventos" />
 
     <item
         android:id="@+id/nav_chat"
-        android:icon="@android:drawable/stat_notify_chat"
+        android:icon="@drawable/chaticon"
         android:title="Chat" />
 
     <item
