@@ -42,8 +42,6 @@ class HomeFragment : Fragment() {
 
     // livros recomendados carregados da API (pra abrir o detalhe depois)
     private var recommendedBooks: List<Book> = emptyList()
-
-    private var recommendedBooks: List<Book> = emptyList()
     private var userRentedBookIds: List<String> = emptyList()
 
     override fun onCreateView(

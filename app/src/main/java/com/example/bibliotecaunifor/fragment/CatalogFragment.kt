@@ -36,7 +36,13 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
         adapter = BookAdapter(allBooks, false) { action, book ->
             if (action == "detail") {
                 parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, BookDetailFragment.newInstance(book, userRentedBookIds.contains(book.id)))
+                    .replace(
+                        R.id.fragment_container,
+                        BookDetailFragment.newInstance(
+                            book,
+                            userRentedBookIds.contains(book.id)
+                        )
+                    )
                     .addToBackStack(null)
                     .commit()
             }
@@ -50,28 +56,32 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
             true
         }
 
-        // Carrega tudo ao abrir
         loadUserRentalsAndBooks()
     }
 
     private fun loadUserRentalsAndBooks() {
-        // Primeiro busca os livros alugados pelo usuário
-        RetrofitClient.bookApi.getMyRentals().enqueue(object : Callback<List<com.example.bibliotecaunifor.models.Rental>> {
-            override fun onResponse(call: Call<List<com.example.bibliotecaunifor.models.Rental>>, response: Response<List<com.example.bibliotecaunifor.models.Rental>>) {
-                userRentedBookIds = response.body()
-                    ?.filter { it.returnDate == null }
-                    ?.mapNotNull { it.bookId }
-                    ?: emptyList()
+        RetrofitClient.bookApi.getMyRentals()
+            .enqueue(object : Callback<List<com.example.bibliotecaunifor.models.Rental>> {
+                override fun onResponse(
+                    call: Call<List<com.example.bibliotecaunifor.models.Rental>>,
+                    response: Response<List<com.example.bibliotecaunifor.models.Rental>>
+                ) {
+                    userRentedBookIds = response.body()
+                        ?.filter { it.returnDate == null }
+                        ?.mapNotNull { it.bookId }
+                        ?: emptyList()
 
-                // Depois busca todos os livros
-                fetchBooks()
-            }
+                    fetchBooks()
+                }
 
-            override fun onFailure(call: Call<List<com.example.bibliotecaunifor.models.Rental>>, t: Throwable) {
-                userRentedBookIds = emptyList()
-                fetchBooks()
-            }
-        })
+                override fun onFailure(
+                    call: Call<List<com.example.bibliotecaunifor.models.Rental>>,
+                    t: Throwable
+                ) {
+                    userRentedBookIds = emptyList()
+                    fetchBooks()
+                }
+            })
     }
 
     private fun fetchBooks() {
@@ -89,7 +99,7 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
             }
 
             override fun onFailure(call: Call<List<Book>>, t: Throwable) {
-                // Silencioso — não quebra a tela
+                // silencioso
             }
         })
     }
@@ -107,20 +117,24 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
 
     private fun applyFilterAndSearch() {
         val query = edtSearch.text.toString().trim()
-        if (query.isBlank() && !showOnlyAvailable) {
-            adapter.updateData(allBooks)
-            return
-        }
-
         val lowerQuery = query.lowercase()
 
         val filtered = allBooks.filter { book ->
-            val matchesSearch = query.isBlank() ||
-                    book.title.lowercase().contains(lowerQuery) ||
-                    book.author.lowercase().contains(lowerQuery) ||
-                    (book.isbn?.lowercase()?.contains(lowerQuery) == true)
+            // 🔹 aluno nunca vê livros ocultos
+            if (book.isHidden) return@filter false
 
-            val isAvailable = !showOnlyAvailable || book.availableCopies > 0
+            val matchesSearch =
+                query.isBlank() ||
+                        book.title.lowercase().contains(lowerQuery) ||
+                        book.author.lowercase().contains(lowerQuery) ||
+                        (book.isbn?.lowercase()?.contains(lowerQuery) == true)
+
+            val isAvailable = if (showOnlyAvailable) {
+                // disponível = tem cópia + empréstimo habilitado
+                book.availableCopies > 0 && book.loanEnabled
+            } else {
+                true
+            }
 
             matchesSearch && isAvailable
         }
@@ -128,7 +142,6 @@ class CatalogFragment : Fragment(R.layout.fragment_catalog) {
         adapter.updateData(filtered)
     }
 
-    // Chamado após alugar/devolver um livro
     fun refreshCatalog() {
         loadUserRentalsAndBooks()
     }
