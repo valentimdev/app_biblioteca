@@ -12,6 +12,7 @@ import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.MainActivity
 import com.example.bibliotecaunifor.R
 import com.example.bibliotecaunifor.api.RetrofitClient
+import com.example.bibliotecaunifor.models.BookStatus
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -70,36 +71,26 @@ class BookDetailFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
 
-        // Preenche os dados
+        // Preenche os dados básicos (vêm do parcelable Book)
         txtTitle.text = book.title
         txtAuthor.text = "Autor: ${book.author}"
         txtIsbn.text = "ISBN: ${book.isbn ?: "-"}"
         txtDescription.text = book.description ?: "Sem descrição"
         txtCopies.text = "Cópias disponíveis: ${book.availableCopies} de ${book.totalCopies}"
 
-        // Aviso se já está alugado
-        if (userHasRental) {
-            txtRentedWarning.visibility = View.VISIBLE
-            txtRentedWarning.text = "Você já possui este livro alugado"
-        } else {
-            txtRentedWarning.visibility = View.GONE
-        }
+        // Configuração inicial (base no que veio do Bundle)
+        configureActionButton(
+            availableCopies = book.availableCopies,
+            txtRentedWarning = txtRentedWarning,
+            btnAction = btnAction
+        )
 
-        // Configura botão de ação
-        when {
-            userHasRental -> {
-                btnAction.text = "DEVOLVER AGORA"
-                btnAction.setOnClickListener { returnBook() }
-            }
-            book.availableCopies > 0 -> {
-                btnAction.text = "ALUGAR AGORA"
-                btnAction.setOnClickListener { rentBook() }
-            }
-            else -> {
-                btnAction.text = "INDISPONÍVEL"
-                btnAction.isEnabled = false
-            }
-        }
+        // Depois disso, busca o status REAL no backend
+        loadBookStatusAndRefreshUi(
+            txtCopies = txtCopies,
+            txtRentedWarning = txtRentedWarning,
+            btnAction = btnAction
+        )
     }
 
     override fun onDestroyView() {
@@ -108,11 +99,88 @@ class BookDetailFragment : Fragment() {
         super.onDestroyView()
     }
 
+    // ---------- UI helpers ----------
+
+    private fun configureActionButton(
+        availableCopies: Int,
+        txtRentedWarning: TextView,
+        btnAction: Button
+    ) {
+        when {
+            userHasRental -> {
+                txtRentedWarning.visibility = View.VISIBLE
+                txtRentedWarning.text = "Você já possui este livro alugado"
+
+                btnAction.text = "DEVOLVER AGORA"
+                btnAction.isEnabled = true
+                btnAction.setOnClickListener { returnBook() }
+            }
+
+            availableCopies > 0 -> {
+                txtRentedWarning.visibility = View.GONE
+
+                btnAction.text = "ALUGAR AGORA"
+                btnAction.isEnabled = true
+                btnAction.setOnClickListener { rentBook() }
+            }
+
+            else -> {
+                txtRentedWarning.visibility = View.GONE
+
+                btnAction.text = "INDISPONÍVEL"
+                btnAction.isEnabled = false
+                btnAction.setOnClickListener(null)
+            }
+        }
+    }
+
+    private fun loadBookStatusAndRefreshUi(
+        txtCopies: TextView,
+        txtRentedWarning: TextView,
+        btnAction: Button
+    ) {
+        RetrofitClient.bookApi.getBookStatus(book.id)
+            .enqueue(object : Callback<BookStatus> {
+                override fun onResponse(
+                    call: Call<BookStatus>,
+                    response: Response<BookStatus>
+                ) {
+                    if (!isAdded) return
+
+                    val status = response.body()
+                    if (response.isSuccessful && status != null) {
+                        // Atualiza flag interna com o que o backend disser
+                        userHasRental = status.isRentedByUser
+
+                        // Atualiza contagem de cópias com base no backend
+                        txtCopies.text =
+                            "Cópias disponíveis: ${status.availableCopies} de ${status.totalCopies}"
+
+                        // Reconfigura botão e aviso
+                        configureActionButton(
+                            availableCopies = status.availableCopies,
+                            txtRentedWarning = txtRentedWarning,
+                            btnAction = btnAction
+                        )
+                    }
+                }
+
+                override fun onFailure(call: Call<BookStatus>, t: Throwable) {
+                    // Se quiser, pode avisar silencioso:
+                    // safeToast("Não foi possível atualizar o status do livro")
+                }
+            })
+    }
+
+    // ---------- Toast seguro ----------
+
     private fun safeToast(message: String) {
         if (isAdded && context != null && message.isNotBlank()) {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
     }
+
+    // ---------- Empréstimo / Devolução ----------
 
     private fun rentBook() {
         // Gera a data de devolução: hoje + 7 dias (formato ISO UTC)
@@ -180,6 +248,7 @@ class BookDetailFragment : Fragment() {
         }
         view?.findViewById<Button>(R.id.btnAction)?.apply {
             text = "DEVOLVER AGORA"
+            isEnabled = true
             setOnClickListener { returnBook() }
         }
     }

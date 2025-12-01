@@ -2,6 +2,7 @@ package com.example.bibliotecaunifor.api
 
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.models.Rental
+import com.example.bibliotecaunifor.models.BookStatus
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -12,19 +13,23 @@ interface BookApi {
 
     // ================== LISTAR / DETALHE ==================
 
+    // Lista pública (aluno/usuário)
     @GET("books")
     fun getBooks(): Call<List<Book>>
+
+    // Lista completa (ADMIN) – vamos usar no CatalogAdminFragment
+    @GET("books/admin")
+    fun getAdminBooks(): Call<List<Book>>
 
     @GET("books/{id}")
     fun getBook(@Path("id") id: String): Call<Book>
 
-    // (opcional) pegar status com isRentedByUser direto do backend
+    // ✅ Agora batendo com o backend: retorna BookStatus (com isRentedByUser, rentalInfo etc.)
     @GET("books/{id}/status")
-    fun getBookStatus(@Path("id") id: String): Call<Book>
+    fun getBookStatus(@Path("id") id: String): Call<BookStatus>
 
     // ================== CRUD ADMIN (multipart) ==================
 
-    // Criar livro com ou sem imagem
     @Multipart
     @POST("books")
     fun createBook(
@@ -34,11 +39,10 @@ interface BookApi {
         @Part("description") description: RequestBody,
         @Part("totalCopies") totalCopies: RequestBody,
         @Part("availableCopies") availableCopies: RequestBody,
-        @Part image: MultipartBody.Part? = null,        // arquivo opcional
-        @Part("imageUrl") imageUrl: RequestBody? = null // URL opcional (se não tiver arquivo)
+        @Part image: MultipartBody.Part? = null,
+        @Part("imageUrl") imageUrl: RequestBody? = null
     ): Call<Book>
 
-    // Atualizar livro (PATCH multipart – título, autor, imagem etc.)
     @Multipart
     @PATCH("books/{id}")
     fun updateBook(
@@ -53,9 +57,8 @@ interface BookApi {
         @Part("imageUrl") imageUrl: RequestBody? = null
     ): Call<Book>
 
-    // ✅ PATCH simples só pra flags (isHidden / loanEnabled)
-    //    usado naquele toggle de “Ocultar” / “Desativar empréstimo”
-    @PATCH("books/{id}")
+    // ✅ PATCH /books/{id}/flags – usado nos toggles do admin
+    @PATCH("books/{id}/flags")
     fun patchBookFlags(
         @Path("id") id: String,
         @Body body: Map<String, @JvmSuppressWildcards Any?>
@@ -66,20 +69,17 @@ interface BookApi {
 
     // ================== EMPRÉSTIMOS ==================
 
-    // Alugar livro com data de devolução
     @POST("books/{id}/rent")
     fun rentBookWithDueDate(
         @Path("id") id: String,
-        @Body body: Map<String, String> // ex: {"dueDate": "2025-12-10T15:00:00.000Z"}
+        @Body body: Map<String, String>
     ): Call<Map<String, Boolean>>
 
-    // Devolver livro
     @POST("books/{id}/return")
     fun returnBook(
         @Path("id") id: String
     ): Call<Map<String, Boolean>>
 
-    // Aluguéis do usuário logado
     @GET("rentals/my")
     fun getMyRentals(): Call<List<Rental>>
 }

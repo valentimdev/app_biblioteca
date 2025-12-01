@@ -43,19 +43,17 @@ class CatalogAdminFragment : Fragment() {
     private val allBooks = mutableListOf<Book>()
 
     // Estados locais (visibilidade e empréstimo)
-    // visibilidadeState: true = visível; false = oculto
     private val emprestimoState = mutableMapOf<String, Boolean>()
     private val visibilidadeState = mutableMapOf<String, Boolean>()
 
-    // Variáveis para armazenar a imagem selecionada
+    // Imagem selecionada
     private var selectedImageUri: Uri? = null
     private var selectedImageFile: File? = null
 
-    // Referências da view do diálogo para poder atualizar via imagePicker
+    // Referência da imageView do diálogo
     private var dialogImgCover: ImageView? = null
-    private var dialogEdtImageUrl: EditText? = null
 
-    // Limite de 5 MB para imagem
+    // Limite de 5 MB
     private val MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024
 
     // Launcher para seleção de imagem
@@ -74,8 +72,6 @@ class CatalogAdminFragment : Fragment() {
                         .error(R.drawable.placeholder_book)
                         .into(img)
                 }
-
-                dialogEdtImageUrl?.setText("")
             }
         }
     }
@@ -108,7 +104,6 @@ class CatalogAdminFragment : Fragment() {
             emprestimoState = emprestimoState,
             visibilidadeState = visibilidadeState,
             onEdit = { book ->
-                // Abrir detalhe (se quiser) ou já ir pro diálogo de edição
                 parentFragmentManager.beginTransaction()
                     .replace(
                         R.id.admin_container,
@@ -122,18 +117,15 @@ class CatalogAdminFragment : Fragment() {
                 val atual = emprestimoState[book.id] ?: true
                 val novo = !atual
 
-                // otimismo: já atualiza UI
                 emprestimoState[book.id] = novo
                 adapter.notifyBookChanged(book.id)
 
-                // chama PATCH no backend
                 RetrofitClient.bookApi.patchBookFlags(
                     book.id,
                     mapOf("loanEnabled" to novo)
                 ).enqueue(object : Callback<Book> {
                     override fun onResponse(call: Call<Book>, response: Response<Book>) {
                         if (!response.isSuccessful || response.body() == null) {
-                            // volta estado se deu ruim
                             emprestimoState[book.id] = atual
                             adapter.notifyBookChanged(book.id)
                             Toast.makeText(
@@ -142,7 +134,6 @@ class CatalogAdminFragment : Fragment() {
                                 Toast.LENGTH_SHORT
                             ).show()
                         } else {
-                            // garante que estado siga o backend
                             val updated = response.body()!!
                             emprestimoState[book.id] = updated.loanEnabled
                             adapter.notifyBookChanged(book.id)
@@ -167,7 +158,6 @@ class CatalogAdminFragment : Fragment() {
                 visibilidadeState[book.id] = novoVisivel
                 adapter.notifyBookChanged(book.id)
 
-                // Backend usa isHidden (true = oculto), então é o inverso de "visível"
                 val novoIsHidden = !novoVisivel
 
                 RetrofitClient.bookApi.patchBookFlags(
@@ -208,14 +198,13 @@ class CatalogAdminFragment : Fragment() {
     }
 
     private fun fetchBooks() {
-        RetrofitClient.bookApi.getBooks().enqueue(object : Callback<List<Book>> {
+        RetrofitClient.bookApi.getAdminBooks().enqueue(object : Callback<List<Book>> {
             override fun onResponse(call: Call<List<Book>>, response: Response<List<Book>>) {
                 if (response.isSuccessful) {
                     allBooks.clear()
                     val lista = response.body() ?: emptyList()
                     allBooks.addAll(lista)
 
-                    // Inicializa estados com o que vier do backend
                     emprestimoState.clear()
                     visibilidadeState.clear()
                     lista.forEach { book ->
@@ -234,8 +223,11 @@ class CatalogAdminFragment : Fragment() {
             }
 
             override fun onFailure(call: Call<List<Book>>, t: Throwable) {
-                Toast.makeText(requireContext(), "Falha ao carregar livros", Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(
+                    requireContext(),
+                    "Falha ao carregar livros",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         })
     }
@@ -245,7 +237,6 @@ class CatalogAdminFragment : Fragment() {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Filtrar livros")
             .setItems(options) { _, _ ->
-                // por enquanto só pesquisa textual; se quiser, dá pra usar availableCopies aqui também
                 applyFilterAndSearch()
             }
             .show()
@@ -274,12 +265,10 @@ class CatalogAdminFragment : Fragment() {
         val edtDescricao = layout.findViewById<EditText>(R.id.edtDescricao)
         val edtTotalCopies = layout.findViewById<EditText>(R.id.edtTotalCopies)
         val edtAvailableCopies = layout.findViewById<EditText>(R.id.edtAvailableCopies)
-        val edtImageUrl = layout.findViewById<EditText>(R.id.edtImageUrl)
         val imgCover = layout.findViewById<ImageView>(R.id.imgCover)
         val btnSelectImage = layout.findViewById<Button>(R.id.btnSelectImage)
 
         dialogImgCover = imgCover
-        dialogEdtImageUrl = edtImageUrl
 
         imgCover.setImageResource(R.drawable.placeholder_book)
 
@@ -290,7 +279,6 @@ class CatalogAdminFragment : Fragment() {
             edtDescricao.setText(book.description ?: "")
             edtTotalCopies.setText(book.totalCopies.toString())
             edtAvailableCopies.setText(book.availableCopies.toString())
-            edtImageUrl.setText(book.imageUrl ?: "")
 
             if (!book.imageUrl.isNullOrEmpty()) {
                 Glide.with(this).load(book.imageUrl).into(imgCover)
@@ -303,21 +291,6 @@ class CatalogAdminFragment : Fragment() {
             imagePickerLauncher.launch(intent)
         }
 
-        edtImageUrl.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus && selectedImageFile == null) {
-                val url = edtImageUrl.text.toString().trim()
-                if (url.isNotBlank()) {
-                    Glide.with(this)
-                        .load(url)
-                        .placeholder(R.drawable.placeholder_book)
-                        .error(R.drawable.placeholder_book)
-                        .into(imgCover)
-                } else {
-                    imgCover.setImageResource(R.drawable.placeholder_book)
-                }
-            }
-        }
-
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(if (book == null) "Adicionar Livro" else "Editar Livro")
             .setView(layout)
@@ -328,10 +301,9 @@ class CatalogAdminFragment : Fragment() {
                 val description = edtDescricao.text.toString()
                 val total = edtTotalCopies.text.toString()
                 val available = edtAvailableCopies.text.toString()
-                val imageUrl = edtImageUrl.text.toString()
 
                 if (book == null) {
-                    createBook(title, author, isbn, description, total, available, imageUrl)
+                    createBook(title, author, isbn, description, total, available)
                 } else {
                     updateBook(
                         book.id,
@@ -340,19 +312,16 @@ class CatalogAdminFragment : Fragment() {
                         isbn,
                         description,
                         total,
-                        available,
-                        imageUrl
+                        available
                     )
                 }
 
                 dialogImgCover = null
-                dialogEdtImageUrl = null
             }
             .setNegativeButton("Cancelar") { _, _ ->
                 selectedImageUri = null
                 selectedImageFile = null
                 dialogImgCover = null
-                dialogEdtImageUrl = null
             }
             .show()
     }
@@ -405,8 +374,7 @@ class CatalogAdminFragment : Fragment() {
         isbn: String,
         description: String,
         totalCopies: String,
-        availableCopies: String,
-        imageUrl: String
+        availableCopies: String
     ) {
         if (title.isBlank() || author.isBlank()) {
             Toast.makeText(
@@ -439,10 +407,8 @@ class CatalogAdminFragment : Fragment() {
             MultipartBody.Part.createFormData("image", file.name, requestFile)
         }
 
-        val imageUrlPart: RequestBody? =
-            if (imagePart == null && imageUrl.isNotBlank()) {
-                imageUrl.toRequestBody(mediaType)
-            } else null
+        // imageUrl agora sempre null (não usamos mais URL)
+        val imageUrlPart: RequestBody? = null
 
         RetrofitClient.bookApi.createBook(
             titlePart,
@@ -501,8 +467,7 @@ class CatalogAdminFragment : Fragment() {
         isbn: String,
         description: String,
         totalCopies: String,
-        availableCopies: String,
-        imageUrl: String
+        availableCopies: String
     ) {
         val mediaType = "text/plain".toMediaTypeOrNull()
 
@@ -532,10 +497,7 @@ class CatalogAdminFragment : Fragment() {
             MultipartBody.Part.createFormData("image", file.name, requestFile)
         }
 
-        val imageUrlPart: RequestBody? =
-            if (imagePart == null && imageUrl.isNotBlank()) {
-                imageUrl.toRequestBody(mediaType)
-            } else null
+        val imageUrlPart: RequestBody? = null
 
         RetrofitClient.bookApi.updateBook(
             bookId,

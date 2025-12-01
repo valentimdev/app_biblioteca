@@ -59,13 +59,7 @@ class GestaoFragment : Fragment() {
             .setPositiveButton(acao) { _, _ ->
                 vm.toggleStatus(user.id)
             }
-            .setNegativeButton("Histórico") { _, _ ->
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Histórico")
-                    .setMessage("Aqui entra a timeline de empréstimos")
-                    .setPositiveButton("Fechar", null)
-                    .show()
-            }
+            // ❌ Histórico removido
             .setNeutralButton("Cancelar", null)
             .show()
     }
