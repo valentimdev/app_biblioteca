@@ -51,9 +51,18 @@ class ConfiguracoesActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Regulamento da Biblioteca")
             .setMessage(
-                "BLABLABLABLABLABLABLA\n" +
-                        "BLABLABLABLABLABLABLA\n" +
-                        "BLABLABLABLABLABLABLA"
+                        "1. EMPRÉSTIMO DE LIVROS\n" +
+                        "• O empréstimo de livros é permitido apenas para usuários devidamente cadastrados.\n" +
+                        "• Cada usuário pode ter múltiplos livros com empréstimo.\n" +
+                        "• O prazo padrão para devolução é de 7 (sete) dias, podendo ser renovado uma vez, caso não haja reserva.\n" +
+                        "• Atrasos na devolução implicam bloqueio temporário para novos empréstimos.\n\n" +
+                        "2. AGENDAMENTO DE EVENTOS\n" +
+                        "• O agendamento de eventos deve ser realizado exclusivamente pelo sistema da biblioteca.\n" +
+                        "• Eventos estão sujeitos à disponibilidade de espaço e aprovação da administração.\n" +
+                        "• O cancelamento deve ser feito com no mínimo 24 horas de antecedência.\n\n" +
+                        "3. DISPOSIÇÕES GERAIS\n" +
+                        "• É responsabilidade do usuário zelar pela conservação do material emprestado.\n" +
+                        "• O não cumprimento deste regulamento poderá acarretar advertências ou suspensão do acesso aos serviços.\n"
             )
             .setPositiveButton("FECHAR") { dialog, _ ->
                 dialog.dismiss()
