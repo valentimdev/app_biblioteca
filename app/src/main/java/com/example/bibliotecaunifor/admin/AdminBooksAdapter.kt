@@ -4,9 +4,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.bibliotecaunifor.Book
 import com.example.bibliotecaunifor.R
 
@@ -21,6 +23,7 @@ class AdminBooksAdapter(
 ) : RecyclerView.Adapter<AdminBooksAdapter.VH>() {
 
     inner class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val imgThumb: ImageView = itemView.findViewById(R.id.imgThumb)
         val tvTitle: TextView = itemView.findViewById(R.id.tvTitle)
         val tvAuthor: TextView = itemView.findViewById(R.id.tvAuthor)
         val tvStatus: TextView = itemView.findViewById(R.id.tvStatus)
@@ -38,10 +41,21 @@ class AdminBooksAdapter(
         holder.tvTitle.text = book.title
         holder.tvAuthor.text = book.author
 
+        // carrega capa se tiver URL
+        if (!book.imageUrl.isNullOrEmpty()) {
+            Glide.with(holder.itemView.context)
+                .load(book.imageUrl)
+                .placeholder(R.drawable.placeholder_book)
+                .error(R.drawable.placeholder_book)
+                .centerCrop()
+                .into(holder.imgThumb)
+        } else {
+            holder.imgThumb.setImageResource(R.drawable.placeholder_book)
+        }
+
         val visivel = visibilidadeState[book.id] ?: true
         val emprestimoOn = emprestimoState[book.id] ?: true
 
-        // lógica do status vermelho
         when {
             !visivel -> {
                 holder.tvStatus.visibility = View.VISIBLE
